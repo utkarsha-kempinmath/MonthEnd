@@ -164,7 +164,7 @@ Rule-based logic
 
 Statistical trend analysis
 
-ML-assisted enhancements planned in later phases
+AI-ML-assisted enhancements planned in later phases
 
 🚧 Project Status
 
