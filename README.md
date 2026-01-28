@@ -52,7 +52,7 @@ Deviation from expected spending
 
 Monthly summaries for reflection
 
-🧠 Behavioral Budget Twin (What-If Simulation)
+🧠 Behavioral Budget Twin (What If Simulation)
 
 Creates a temporary in-memory snapshot of the user’s current budget state
 
@@ -126,7 +126,7 @@ Category-wise patterns
 
 Remaining allowance for the month
 
-What-If Query via Chatbot User asks: “Can I spend ₹600 today?”
+What If Query via Chatbot User asks: “Can I spend ₹600 today?”
 
 Budget Twin Simulation
 
@@ -156,7 +156,7 @@ Node.js + Express
 
 REST APIs
 
-Database: MongoDB (to be finalized)
+Database: MongoDB
 
 Intelligence Layer
 
