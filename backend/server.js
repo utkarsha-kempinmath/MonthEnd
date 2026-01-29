@@ -2,23 +2,28 @@ const express = require("express")
 const cors = require('cors')
 const mongoose = require('mongoose')
 const dotenv = require('dotenv')
+const { errorMiddleware } = require("./errors/error")
 
-dotenv.config();
+dotenv.config({path: './config/config.env'});
 
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}))
+app.use(errorMiddleware)
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: [process.env.FRONTEND_URL],
+    methods: ["GET", "POST"],
     credentials: true,
   })
 );
 
 mongoose
-  .connect(process.env.MONGO_URI)
+  .connect(process.env.MONGO_URI, {
+    dbName: "UnFold"
+  })
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error(err));
 
@@ -26,7 +31,7 @@ mongoose
 app.get("/api/test", (req, res) => {
   res.json({ message: "Backend is connected!" });
 });
-
-app.listen(3000, () => {
-  console.log("Backend running on http://localhost:3000");
+ 
+app.listen(process.env.PORT, () => {
+  console.log(`Backend running on ${process.env.PORT}`);
 });
