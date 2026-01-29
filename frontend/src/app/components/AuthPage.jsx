@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button } from "./ui/button";
+import { Button } from "./ui/button"; 
 import { Input } from "./ui/input";
 import { ArrowRight, User, Mail, Lock, Sparkles } from "lucide-react";
 
