@@ -1,0 +1,25 @@
+{
+  "userId": "test_user",
+  "profile": {
+    "role": "student",
+    "ageGroup": "college"
+  },
+  "budget": {
+    "monthlyAllowance": 10000,
+    "currency": "INR",
+    "cycle": "monthly"
+  },
+  "preferences": {
+    "primaryCategories": [
+      "Food",
+      "Transport",
+      "Entertainment",
+      "Shopping"
+    ],
+    "riskTolerance": "medium"
+  },
+  "metadata": {
+    "createdAt": "2026-01-01",
+    "dataVersion": 1
+  }
+}
