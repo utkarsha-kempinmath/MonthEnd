@@ -8,8 +8,8 @@ export function Screen5ExpectedVsActual({ onContinue }) {
     { category: "Food", Expected: 3000, Actual: 4200, color: "#f59e0b" },
     { category: "Transport", Expected: 1000, Actual: 950, color: "#3b82f6" },
     { category: "Academics", Expected: 2000, Actual: 1800, color: "#8b5cf6" },
-    { category: "Personal", Expected: 2000, Actual: 2100, color: "#ec4899" },
-    { category: "Misc", Expected: 2000, Actual: 1850, color: "#6366f1" },
+    { category: "Personal and Health Care", Expected: 2000, Actual: 2100, color: "#ec4899" },
+    { category: "Other", Expected: 2000, Actual: 1850, color: "#6366f1" },
   ];
 
   return (
