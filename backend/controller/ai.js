@@ -1,6 +1,6 @@
-import fetch from "node-fetch";
+const {ErrorHandler} = require("../errors/error");
 
-export const analyzeText = async (req, res) => {
+const analyzeText = async (req, res) => {
   try {
     const { userInput } = req.body;
 
@@ -19,7 +19,7 @@ Task:
 Analyze the situation and give clear advice.
     `;
 
-    // Call Hugging Face FLAN-T5
+    // Call FLAN-T5 (API or local service URL)
     const response = await fetch(
       "https://api-inference.huggingface.co/models/google/flan-t5-base",
       {
@@ -48,4 +48,8 @@ Analyze the situation and give clear advice.
     console.error(error);
     res.status(500).json({ error: "AI processing failed" });
   }
+};
+
+module.exports = {
+  analyzeText
 };
