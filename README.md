@@ -1,8 +1,5 @@
 MonthEnd
-<<<<<<< HEAD
 
-=======
->>>>>>> 14bea29476738d90e3ae86ad5256dd04a1bd840a
 Patterns over prescriptions.
 
 Allowance-Based Financial Wellness Platform
