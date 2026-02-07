@@ -3,7 +3,7 @@ const cors = require('cors')
 const mongoose = require('mongoose')
 const dotenv = require('dotenv')
 const { errorMiddleware } = require("./errors/error")
-const userRouter = require('./routes/userRoute')
+const usersRouter = require('./routes/usersRoute')
 const aiRoute = require('./routes/aiRoute')
 
 dotenv.config({path: './config/config.env'});
