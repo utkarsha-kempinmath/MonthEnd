@@ -4,7 +4,6 @@ const mongoose = require('mongoose')
 const dotenv = require('dotenv')
 const { errorMiddleware } = require("./errors/error")
 const userRouter = require('./routes/userRoute')
-const aiRoute = require('./routes/aiRoute')
 
 dotenv.config({path: './config/config.env'});
 
@@ -13,7 +12,6 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({extended: true}))
 app.use('/api/user', userRouter)
-app.use("/api/ai", aiRoute);
 
 
 app.use(
@@ -26,7 +24,7 @@ app.use(
 app.use(errorMiddleware)
 mongoose
   .connect(process.env.MONGO_URI, {
-    dbName: "UnFold"
+    dbName: "MonthEnd"
   })
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error(err));
