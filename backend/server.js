@@ -1,9 +1,10 @@
+
 const express = require("express")
 const cors = require('cors')
 const mongoose = require('mongoose')
 const dotenv = require('dotenv')
 const { errorMiddleware } = require("./errors/error")
-const userRouter = require('./routes/userRoute')
+const authRouter = require('./routes/authRoute')
 
 dotenv.config({path: './config/config.env'});
 
@@ -11,7 +12,7 @@ const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}))
-app.use('/api/user', userRouter)
+app.use('/api/auth', authRouter)
 
 
 app.use(
