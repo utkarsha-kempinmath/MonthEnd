@@ -19,7 +19,7 @@ const createdUser = async (req, res, next) => {
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: "User already registered"
+        message: "User already registered, Try Login!!"
       });
 
     }
@@ -51,4 +51,54 @@ const createdUser = async (req, res, next) => {
   }
 };
 
-module.exports = { createdUser };
+const loginUser = async (req, res, next) => {
+  try {
+    const { email, passwordHash } = req.body;
+
+    if (!email || !passwordHash) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and password required"
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid credentials"
+      });
+    }
+
+    const isMatch = await bcrypt.compare(passwordHash, user.passwordHash);
+
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid credentials"
+      });
+    }
+
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES || "7d" }
+    );
+
+    res.cookie("token", token, {
+      httpOnly: true
+    });
+
+    res.status(200).json({
+      success: true,
+      user
+    });
+
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+module.exports = { createdUser, loginUser};
