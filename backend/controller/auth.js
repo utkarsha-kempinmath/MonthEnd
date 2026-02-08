@@ -46,6 +46,7 @@ const createdUser = async (req, res, next) => {
       user: newUser
     });
 
+    res.redirect('/home')
   } catch (err) {
     next(err);
   }
@@ -94,6 +95,8 @@ const loginUser = async (req, res, next) => {
       success: true,
       user
     });
+    
+    res.redirect('/home')
 
   } catch (err) {
     next(err);
