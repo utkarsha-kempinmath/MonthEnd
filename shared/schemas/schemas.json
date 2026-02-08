@@ -1,0 +1,56 @@
+{
+"$schemaVersion": "1.0",
+
+"Allowance": {
+"amount": "number",
+"source": "string",
+"period": "string (daily | weekly | monthly | yearly)",
+"startDate": "ISODate"
+},
+
+"CalendarEvent": {
+"eventName": "string",
+"startDate": "ISODate",
+"endDate": "ISODate",
+"eventType": "string (bill | salary | subscription | reminder | custom)"
+},
+
+"Expense": {
+"amount": "number",
+"date": "ISODate",
+"category": "string",
+"detail": "string",
+"tag": "string",
+"isCorrected": "boolean"
+},
+
+"Goal": {
+"title": "string",
+"targetAmount": "number",
+"currentAmount": "number",
+"deadline": "ISODate",
+"createdAt": "ISODate"
+},
+
+"Planning": {
+"food": "number",
+"transport": "number",
+"academics": "number",
+"care": "number",
+"other": "number"
+},
+
+"User": {
+"_id": "ObjectId",
+"fullname": "string",
+"email": "string",
+"passwordHash": "string",
+
+"calendar": "CalendarEvent[]",
+"allowances": "Allowance[]",
+"planning": "Planning[]",
+"expenses": "Expense[]",
+"goals": "Goal[]"
+
+}
+}

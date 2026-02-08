@@ -1,12 +1,12 @@
 const mongoose = require('mongoose')
 
 const expensesSchema = mongoose.Schema({
-    amt: Number,
+    amount: Number,
     date: {
         type: Date,
         default: Date.now
     },
-    catagory: String,
+    category: String,
     detail: String,
     tag: String,
     isCorrected: {

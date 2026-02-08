@@ -3,7 +3,7 @@ const mongoose = require('mongoose')
 const userSchema = mongoose.Schema({
     fullname: String,
     email: String,
-    password: String,
+    passwordHash: String,
     calander: {
         type: Array,
         default: []

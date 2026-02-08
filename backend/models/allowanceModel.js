@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 
 const allowanceSchema = mongoose.Schema({
-    amt: Number,
+    amount: Number,
     source: String,
     period: String,
     startDate: {

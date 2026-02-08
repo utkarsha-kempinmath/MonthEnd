@@ -1,11 +1,11 @@
 const mongoose = require('mongoose')
 
 const planningSchema = mongoose.Schema({
-    foodAmt: Number,
-    transportAmt: Number,
-    academicsAmt: Number,
-    careAmt: Number,
-    otherAmt: Number
+    food: Number,
+    transport: Number,
+    academics: Number,
+    care: Number,
+    other: Number
 })
 
 module.exports = mongoose.model('planning', planningSchema)

@@ -1,11 +1,14 @@
 const mongoose = require('mongoose')
 
 const goalSchema = mongoose.Schema({
-    goal: String,
-    target: Number,
-    timeline: String,
-    amt: Number,
-    date: {
+    title: String,
+    targetAmount: Number,
+    currentAmount: Number,
+    deadline: {
+        type: Date,
+        default: Date.now
+    },
+    createdAt: {
         type: Date,
         default: Date.now
     }
