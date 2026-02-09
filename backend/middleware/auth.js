@@ -1,20 +1,29 @@
-const jwt = require("jsonwebtoken");
+const jwt = require("jsonwebtoken")
+const User = require("../models/userModel")
 
-const isLoggedIn = (req, res, next) => {
+const isLoggedIn = async (req, res, next) => {
   try {
-    const token = req.cookies.token;
+    const token = req.cookies.token
 
     if (!token) {
-      return res.status(401).json({ message: "Unauthorized" });
+      return res.status(401).json({ message: "Unauthorized" })
     }
 
-    const data = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
 
-    req.user = data;
-    next();
+
+    const user = await User.findById(decoded._id)
+    console.log(user)
+
+    if (!user) {
+      return res.status(401).json({ message: "User not found" })
+    }
+
+    req.user = user 
+
+    next()
   } catch (err) {
-    return res.status(401).json({ message: "Invalid token" });
+    return res.status(401).json({ message: "Invalid token" })
   }
-};
-
-module.exports =  isLoggedIn ;
+}
+module.exports = isLoggedIn

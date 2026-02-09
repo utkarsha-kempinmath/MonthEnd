@@ -9,12 +9,9 @@ const {
 const  isLoggedIn  = require("../middleware/auth");
 
 const router = express.Router();
-
-router.use(isLoggedIn); 
-
-router.get("/", getAllowances);
-router.post("/", addAllowance);
-router.put("/:id", updateAllowance);
-router.delete("/:id", deleteAllowance);
+router.get("/", isLoggedIn, getAllowances);
+router.post("/", isLoggedIn, addAllowance);
+router.put("/:id", isLoggedIn, updateAllowance);
+router.delete("/:id", isLoggedIn, deleteAllowance);
 
 module.exports = router;

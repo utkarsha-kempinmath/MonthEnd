@@ -9,7 +9,7 @@ const users = require("../models/userModel");
 
 const getDashboard = async (req, res, next) => {
   try {
-    const user = await users.findById(req.user.userId);
+    const user = await users.findById(req.user._id);
 
     const expenses = user.expenses;
     const allowance = user.allowance;

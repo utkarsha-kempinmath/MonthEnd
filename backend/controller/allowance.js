@@ -8,7 +8,9 @@ const Allowance = require("../models/allowanceModel");
 
 const getAllowances = async (req, res) => {
   try {
-    const allowances = await Allowance.find({ user: req.user.userId });
+    const allowances = await Allowance.find({ user: req.user._id });
+    console.log("req.user →", req.user)
+
 
     res.status(200).json({
       success: true,
@@ -29,7 +31,7 @@ const addAllowance = async (req, res) => {
     }
 
     const newAllowance = await Allowance.create({
-      user: req.user.userId,  
+      user: req.user._id,  
       amount,
       source,
       period,
@@ -51,7 +53,7 @@ const updateAllowance = async (req, res) => {
     const allowance = await Allowance.findOneAndUpdate(
       {
         _id: req.params.id,
-        user: req.user.userId 
+        user: req.user._id 
       },
       req.body,
       { new: true }
@@ -71,7 +73,7 @@ const deleteAllowance = async (req, res) => {
   try {
     await Allowance.findOneAndDelete({
       _id: req.params.id,
-      user: req.user.userId
+      user: req.user._id
     });
 
     res.status(200).json({
