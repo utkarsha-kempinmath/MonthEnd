@@ -1,56 +1,67 @@
 {
-"$schemaVersion": "1.0",
+  "$schemaVersion": "2.0",
 
-"Allowance": {
-"amount": "number",
-"source": "string",
-"period": "string (daily | weekly | monthly | yearly)",
-"startDate": "ISODate"
-},
+  "Allowance": {
+    "user": "ObjectId (ref: user)",
+    "amount": "number",
+    "source": "string",
+    "period": "string (daily | weekly | monthly | yearly)",
+    "startDate": "ISODate",
+    "createdAt": "ISODate",
+    "updatedAt": "ISODate"
+  },
 
-"CalendarEvent": {
-"eventName": "string",
-"startDate": "ISODate",
-"endDate": "ISODate",
-"eventType": "string (bill | salary | subscription | reminder | custom)"
-},
+  "CalendarEvent": {
+    "user": "ObjectId (ref: user)",
+    "eventName": "string",
+    "startDate": "ISODate",
+    "endDate": "ISODate",
+    "eventType": "string (exam | submission | fest | reminder | other)",
+    "createdAt": "ISODate",
+    "updatedAt": "ISODate"
+  },
 
-"Expense": {
-"amount": "number",
-"date": "ISODate",
-"category": "string",
-"detail": "string",
-"tag": "string",
-"isCorrected": "boolean"
-},
+  "Expense": {
+    "user": "ObjectId (ref: user)",
+    "amount": "number",
+    "date": "ISODate",
+    "category": "string",
+    "note": "string",
+    "emotions": "string[]",
+    "createdAt": "ISODate",
+    "updatedAt": "ISODate"
+  },
 
-"Goal": {
-"title": "string",
-"targetAmount": "number",
-"currentAmount": "number",
-"deadline": "ISODate",
-"createdAt": "ISODate"
-},
+  "Goal": {
+    "user": "ObjectId (ref: user)",
+    "title": "string",
+    "targetAmount": "number",
+    "currentAmount": "number",
+    "deadline": "ISODate",
+    "createdAt": "ISODate",
+    "updatedAt": "ISODate"
+  },
 
-"Planning": {
-"food": "number",
-"transport": "number",
-"academics": "number",
-"care": "number",
-"other": "number"
-},
+  "Planning": {
+    "user": "ObjectId (ref: user)",
+    "month": "string (YYYY-MM)",
+    "categories": [
+      {
+        "name": "string",
+        "amount": "number"
+      }
+    ],
+    "total": "number",
+    "createdAt": "ISODate",
+    "updatedAt": "ISODate"
+  },
 
-"User": {
-"_id": "ObjectId",
-"fullname": "string",
-"email": "string",
-"passwordHash": "string",
-
-"calendar": "CalendarEvent[]",
-"allowances": "Allowance[]",
-"planning": "Planning[]",
-"expenses": "Expense[]",
-"goals": "Goal[]"
-
-}
+  "User": {
+    "_id": "ObjectId",
+    "fullname": "string",
+    "email": "string",
+    "passwordHash": "string",
+    "createdAt": "ISODate",
+    "updatedAt": "ISODate"
+  }
 }
