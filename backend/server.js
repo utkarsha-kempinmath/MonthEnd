@@ -10,6 +10,7 @@ const cookieParser = require("cookie-parser");
 const allowanceRoute = require("./routes/allowanceRoute");
 const calendarRoute = require('./routes/calendarRoute')
 const planningRoute = require('./routes/planningRoute')
+const expensesRoute = require('./routes/expensesRoute')
 
 
 dotenv.config({path: './config/config.env'});
@@ -24,6 +25,7 @@ app.use('/api/home', homeRouter)
 app.use("/api/allowance", allowanceRoute);
 app.use('/api/calendar', calendarRoute)
 app.use('/api/planning', planningRoute)
+app.use('/api/expenses', expensesRoute)
 
 app.use(
   cors({
