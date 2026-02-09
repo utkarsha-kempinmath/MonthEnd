@@ -5,6 +5,7 @@ const mongoose = require('mongoose')
 const dotenv = require('dotenv')
 const { errorMiddleware } = require("./errors/error")
 const authRouter = require('./routes/authRoute')
+const homeRouter = require('./routes/homeRoute')
 
 dotenv.config({path: './config/config.env'});
 
@@ -13,6 +14,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({extended: true}))
 app.use('/api/auth', authRouter)
+app.use('/api/home', homeRouter)
 
 
 app.use(
