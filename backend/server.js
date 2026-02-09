@@ -6,11 +6,16 @@ const dotenv = require('dotenv')
 const { errorMiddleware } = require("./errors/error")
 const authRouter = require('./routes/authRoute')
 const homeRouter = require('./routes/homeRoute')
+const cookieParser = require("cookie-parser");
+
+
+
 
 dotenv.config({path: './config/config.env'});
 
 const app = express();
 
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({extended: true}))
 app.use('/api/auth', authRouter)
