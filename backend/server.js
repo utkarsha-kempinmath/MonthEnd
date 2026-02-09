@@ -7,7 +7,7 @@ const { errorMiddleware } = require("./errors/error")
 const authRouter = require('./routes/authRoute')
 const homeRouter = require('./routes/homeRoute')
 const cookieParser = require("cookie-parser");
-
+const allowanceRoute = require("./routes/allowanceRoute");
 
 
 
@@ -20,7 +20,7 @@ app.use(express.json());
 app.use(express.urlencoded({extended: true}))
 app.use('/api/auth', authRouter)
 app.use('/api/home', homeRouter)
-
+app.use("/api/allowance", allowanceRoute);
 
 app.use(
   cors({
