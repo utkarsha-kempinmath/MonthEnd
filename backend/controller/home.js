@@ -8,7 +8,7 @@ dotenv.config({path: './config/config.env'});
 const users = require("../models/userModel");
 const Expense = require('../models/expensesModel')
 const Planning = require('../models/planningModel')
-const { generateInsights } = require('../services/insightService')
+const { generateInsights } = require('../services/insightsGeneral.js')
 
 exports.getMonthlyAnalysis = async (req, res) => {
     try {
