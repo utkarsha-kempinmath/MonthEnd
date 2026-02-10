@@ -6,5 +6,7 @@ const controller = require('../controller/expenses')
 
 router.post('/', isLoggedIn, controller.addExpense)
 router.get('/', isLoggedIn, controller.getExpenses)
+router.patch('/:id', isLoggedIn, controller.updateExpense)
+router.delete('/:id', isLoggedIn, controller.deleteExpense)
 
 module.exports = router

@@ -18,6 +18,42 @@ exports.addExpense = async (req, res) => {
     }
 }
 
+exports.updateExpense = async (req, res) => {
+    try {
+        const expense = await Expense.findOneAndUpdate(
+            { _id: req.params.id, user: req.user._id },
+            req.body,
+            { new: true }
+        )
+
+        res.json({
+            success: true,
+            expense
+        })
+
+    } catch (err) {
+        res.status(500).json({ error: err.message })
+    }
+}
+
+exports.deleteExpense = async (req, res) => {
+    try {
+        await Expense.findOneAndDelete({
+            _id: req.params.id,
+            user: req.user._id
+        })
+
+        res.json({
+            success: true,
+            message: "Expense deleted"
+        })
+
+    } catch (err) {
+        res.status(500).json({ error: err.message })
+    }
+}
+
+
 exports.getExpenses = async (req, res) => {
     try {
 
