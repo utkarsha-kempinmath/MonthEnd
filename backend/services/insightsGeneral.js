@@ -1,18 +1,25 @@
-exports.generateInsights = (stats) => {
+exports.generateInsights = (stats, month) => {
+
+    if (!stats || stats.length === 0) {
+        return [`No spending data available for ${month}`]
+    }
 
     const insights = []
 
-    stats.forEach(s => {
+    const sorted = [...stats].sort((a, b) =>
+        Math.abs(b.diff) - Math.abs(a.diff)
+    )
 
-        const diff = s.actual - s.expected
+    sorted.forEach(s => {
 
+        const diff = s.diff
         if (diff > s.expected * 0.2) {
             insights.push(
                 `${s.category} spending exceeded expectation by ₹${diff}`
             )
         }
 
-        if (diff < -s.expected * 0.2) {
+        else if (diff < -s.expected * 0.2) {
             insights.push(
                 `You saved ₹${Math.abs(diff)} in ${s.category}`
             )
@@ -20,7 +27,7 @@ exports.generateInsights = (stats) => {
     })
 
     if (insights.length === 0) {
-        insights.push("Your spending is well aligned with your plan this month 👍")
+        insights.push(`Spending stayed close to plan in ${month} `)
     }
 
     return insights.slice(0, 2)

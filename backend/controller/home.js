@@ -15,19 +15,23 @@ exports.getMonthlyAnalysis = async (req, res) => {
 
         const userId = req.user._id
 
-        const now = new Date()
-        const year = now.getFullYear()
-        const month = now.getMonth()
+        let { month } = req.query   // "2026-02"
 
-        const monthStr = `${year}-${String(month + 1).padStart(2, '0')}`
+        const now = new Date()
+
+        if (!month) {
+            month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+        }
+
+        const [year, monthIndex] = month.split('-').map(Number)
+
+        const start = new Date(year, monthIndex - 1, 1)
+        const end = new Date(year, monthIndex, 1)
 
         const plan = await Planning.findOne({
             user: userId,
-            month: monthStr
+            month
         })
-
-        const start = new Date(year, month, 1)
-        const end = new Date(year, month + 1, 1)
 
         const expenses = await Expense.find({
             user: userId,
@@ -57,18 +61,20 @@ exports.getMonthlyAnalysis = async (req, res) => {
             })
         }
 
-        const insights = generateInsights(stats)
+        const insights = generateInsights(stats, month)
 
         res.json({
             success: true,
-            stats, 
-            insights  
+            month,
+            stats,
+            insights
         })
 
     } catch (err) {
         res.status(500).json({ error: err.message })
     }
 }
+
 
 exports.getDashboard = async (req, res, next) => {
   try {
