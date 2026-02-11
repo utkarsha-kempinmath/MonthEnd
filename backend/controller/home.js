@@ -3,12 +3,53 @@ const User = require('../models/userModel.js');
 const dotenv = require('dotenv')
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken')
+const { generateReflections } = require("../services/reflection")
+const { generateInsights } = require('../services/insightsGeneral.js')
 dotenv.config({path: './config/config.env'});
 
 const users = require("../models/userModel");
 const Expense = require('../models/expensesModel')
 const Planning = require('../models/planningModel')
-const { generateInsights } = require('../services/insightsGeneral.js')
+
+exports.getMonthlyReflection = async (req, res) => {
+    try {
+
+        const userId = req.user._id
+        const monthQuery = req.query.month
+
+        const now = monthQuery ? new Date(monthQuery + "-01") : new Date()
+
+        const year = now.getFullYear()
+        const month = now.getMonth()
+
+        const start = new Date(year, month, 1)
+        const end = new Date(year, month + 1, 1)
+
+        const expenses = await Expense.find({
+            user: userId,
+            date: { $gte: start, $lt: end }
+        })
+
+        // daily trend
+        const dailyTrend = new Array(31).fill(0)
+
+        expenses.forEach(e => {
+            const day = new Date(e.date).getDate()
+            dailyTrend[day - 1] += e.amount
+        })
+
+        const observations = generateReflections(expenses)
+
+        res.json({
+            success: true,
+            dailyTrend,
+            observations
+        })
+
+    } catch (err) {
+        res.status(500).json({ error: err.message })
+    }
+}
 
 exports.getMonthlyAnalysis = async (req, res) => {
     try {
