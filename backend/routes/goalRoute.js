@@ -12,7 +12,7 @@ const {
 
 router.get("/", isLoggedIn, getAllGoals)
 router.post("/", isLoggedIn, createGoal)
-router.get("/:goalId/analysis", isLoggedIn, getGoalAnalysis)
+router.get("/:goalId", isLoggedIn, getGoalAnalysis)
 router.put("/:goalId", isLoggedIn, updateGoal)
 router.delete("/:goalId", isLoggedIn, deleteGoal)
 
