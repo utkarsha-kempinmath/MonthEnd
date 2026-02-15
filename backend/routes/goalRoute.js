@@ -11,5 +11,7 @@ const {
 router.get("/", isLoggedIn, getAllGoals)
 router.post("/", isLoggedIn, createGoal)
 router.get("/:goalId/analysis", isLoggedIn, getGoalAnalysis)
+router.put("/:goalId", isLoggedIn, updateGoal)
+router.delete("/:goalId", isLoggedIn, deleteGoal)
 
 module.exports = router

@@ -11,6 +11,7 @@ const allowanceRoute = require("./routes/allowanceRoute");
 const calendarRoute = require('./routes/calendarRoute')
 const planningRoute = require('./routes/planningRoute')
 const expensesRoute = require('./routes/expensesRoute')
+const goalRoute = require('./routes/goalRoute')
 
 
 dotenv.config({path: './config/config.env'});
@@ -26,11 +27,12 @@ app.use("/api/allowance", allowanceRoute);
 app.use('/api/calendar', calendarRoute)
 app.use('/api/planning', planningRoute)
 app.use('/api/expenses', expensesRoute)
+app.use('/api/goals')
 
 app.use(
   cors({
     origin: [process.env.FRONTEND_URL],
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "PATCH", "DELETE", "PUT"],
     credentials: true,
   })
 );
