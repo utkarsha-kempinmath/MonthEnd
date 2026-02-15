@@ -1,5 +1,5 @@
 {
-  "$schemaVersion": "2.0",
+  "$schemaVersion": "2.1",
 
   "Allowance": {
     "user": "ObjectId (ref: user)",
@@ -27,17 +27,17 @@
     "date": "ISODate",
     "category": "string",
     "note": "string",
-    "emotions": "string[]",
+    "emotions": "string[] (calm | stress | social | impulse | other)",
     "createdAt": "ISODate",
     "updatedAt": "ISODate"
   },
 
   "Goal": {
     "user": "ObjectId (ref: user)",
-    "title": "string",
+    "name": "string",
     "targetAmount": "number",
-    "currentAmount": "number",
-    "deadline": "ISODate",
+    "timelineMonths": "number",
+    "savedAmount": "number",
     "createdAt": "ISODate",
     "updatedAt": "ISODate"
   },
