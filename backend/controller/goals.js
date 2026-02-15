@@ -1,4 +1,4 @@
-const Goal = require('../models/goalsModel')
+const Goal = require('../models/goalModel')
 
 exports.getAllGoals = async (req, res) => {
     try {

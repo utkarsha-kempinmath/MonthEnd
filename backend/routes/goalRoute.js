@@ -5,8 +5,10 @@ const isLoggedIn = require("../middleware/auth")
 const {
     getAllGoals,
     createGoal,
-    getGoalAnalysis
-} = require("../controller/goal")
+    getGoalAnalysis,
+    updateGoal,
+    deleteGoal
+} = require("../controller/goals")
 
 router.get("/", isLoggedIn, getAllGoals)
 router.post("/", isLoggedIn, createGoal)

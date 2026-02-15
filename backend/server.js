@@ -27,7 +27,7 @@ app.use("/api/allowance", allowanceRoute);
 app.use('/api/calendar', calendarRoute)
 app.use('/api/planning', planningRoute)
 app.use('/api/expenses', expensesRoute)
-app.use('/api/goals')
+app.use('/api/goals', goalRoute)
 
 app.use(
   cors({
