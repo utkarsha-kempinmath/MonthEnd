@@ -64,7 +64,7 @@ exports.generateReflections = (expenses) => {
         observations.push(`Most purchases were tagged '${topEmotion}'.`)
 
     if (observations.length === 0)
-        observations.push("Your spending stayed fairly consistent this month 👍")
+        observations.push("Your spending stayed fairly consistent this month")
 
     return observations.slice(0, 3)
 }
