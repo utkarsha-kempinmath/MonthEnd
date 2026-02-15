@@ -1,12 +1,26 @@
-const mongoose = require('mongoose')
+const mongoose = require("mongoose")
 
 const goalSchema = mongoose.Schema({
-    title: String,
-    targetAmount: Number,
-    currentAmount: Number,
-    deadline: {
-        type: Date,
-        default: Date.now
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "user",
+        required: true
+    },
+    name: {
+        type: String,
+        required: true
+    },
+    targetAmount: {
+        type: Number,
+        required: true
+    },
+    timelineMonths: {
+        type: Number,
+        required: true
+    },
+    savedAmount: {
+        type: Number,
+        default: 0
     },
     createdAt: {
         type: Date,
@@ -14,4 +28,4 @@ const goalSchema = mongoose.Schema({
     }
 })
 
-module.exports = mongoose.model('goal', goalSchema)
+module.exports = mongoose.model("goal", goalSchema)
