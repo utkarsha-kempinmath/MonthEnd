@@ -1,69 +1,148 @@
-exports.generateReflections = (expenses) => {
+const calculateStdDev = (arr) => {
+    if (!arr.length) return 0
 
-    const observations = []
+    const mean = arr.reduce((a, b) => a + b, 0) / arr.length
+    const variance = arr.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / arr.length
+    return Math.sqrt(variance)
+}
 
-    if (!expenses.length) {
-        return ["No spending data for this month yet."]
-    }
+const safeDivide = (a, b) => {
+    if (!b) return 0
+    return a / b
+}
 
-    const dayMap = {}
-    const categoryMap = {}
-    const emotionMap = {}
+exports.buildBehavioralStateInput = ({
+    currentExpenses = [],
+    previousExpenses = [],
+    currentPlan = { totalBudget: 0 },
+    year,
+    monthIndex
+}) => {
 
-    expenses.forEach(e => {
+    if (!currentExpenses.length) return null
 
-        const day = new Date(e.date).getDate()
+    //basic
 
-        dayMap[day] = (dayMap[day] || 0) + e.amount
-        categoryMap[e.category] = (categoryMap[e.category] || 0) + e.amount
+    const totalSpent = currentExpenses.reduce((sum, e) => sum + e.amount, 0)
+    const prevTotalSpent = previousExpenses.reduce((sum, e) => sum + e.amount, 0)
 
+    const totalBudget = currentPlan.totalBudget || 0
+
+    const transactionCount = currentExpenses.length
+    const prevTransactionCount = previousExpenses.length
+
+    //financial
+
+    const budgetUtilization = safeDivide(totalSpent, totalBudget)
+
+    const planDeviationRatio = totalBudget
+        ? (totalSpent - totalBudget) / totalBudget
+        : 0
+
+    const spendingDelta = prevTotalSpent
+        ? (totalSpent - prevTotalSpent) / prevTotalSpent
+        : 0
+
+    const transactionDelta = prevTransactionCount
+        ? (transactionCount - prevTransactionCount) / prevTransactionCount
+        : 0
+
+    //emotional
+
+    const emotionTotals = {}
+    const prevEmotionTotals = {}
+
+    currentExpenses.forEach(e => {
         if (e.emotion?.primary) {
-            emotionMap[e.emotion.primary] =
-                (emotionMap[e.emotion.primary] || 0) + e.amount
+            emotionTotals[e.emotion.primary] =
+                (emotionTotals[e.emotion.primary] || 0) + e.amount
         }
     })
 
-    let peakDay = 0
-    let peakValue = 0
-
-    Object.entries(dayMap).forEach(([d, val]) => {
-        if (val > peakValue) {
-            peakValue = val
-            peakDay = d
+    previousExpenses.forEach(e => {
+        if (e.emotion?.primary) {
+            prevEmotionTotals[e.emotion.primary] =
+                (prevEmotionTotals[e.emotion.primary] || 0) + e.amount
         }
     })
 
-    let topCategory = ""
-    let topValue = 0
+    const allEmotions = new Set([
+        ...Object.keys(emotionTotals),
+        ...Object.keys(prevEmotionTotals)
+    ])
 
-    Object.entries(categoryMap).forEach(([c, val]) => {
-        if (val > topValue) {
-            topValue = val
-            topCategory = c
-        }
+    const distribution = {}
+
+    allEmotions.forEach(emo => {
+        distribution[emo] = safeDivide(emotionTotals[emo] || 0, totalSpent)
     })
 
-    let topEmotion = ""
-    let emotionCount = 0
+    const stressSpendRatio = safeDivide(emotionTotals["stressed"] || 0, totalSpent)
 
-    Object.entries(emotionMap).forEach(([e, val]) => {
-        if (val > emotionCount) {
-            emotionCount = val
-            topEmotion = e
-        }
+    const emotionalVolatilityIndex = [...allEmotions].reduce((sum, emo) => {
+        const currRatio = safeDivide(emotionTotals[emo] || 0, totalSpent)
+        const prevRatio = safeDivide(prevEmotionTotals[emo] || 0, prevTotalSpent)
+        return sum + Math.abs(currRatio - prevRatio)
+    }, 0)
+
+    //temporal
+
+    const dailyMap = {}
+
+    currentExpenses.forEach(e => {
+        const day = new Date(e.date).getDate()
+        dailyMap[day] = (dailyMap[day] || 0) + e.amount
     })
 
-    if (peakDay)
-        observations.push(`Highest spending happened on day ${peakDay} (₹${peakValue}).`)
+    const dailyValues = Object.values(dailyMap)
 
-    if (topCategory)
-        observations.push(`${topCategory} was your biggest expense category this month.`)
+    const daysInMonth = new Date(year, monthIndex, 0).getDate()
 
-    if (topEmotion)
-        observations.push(`Most purchases were tagged '${topEmotion}'.`)
+    const dailyStd = calculateStdDev(dailyValues)
+    const dailyMean = safeDivide(totalSpent, daysInMonth)
 
-    if (observations.length === 0)
-        observations.push("Your spending stayed fairly consistent this month")
+    const dailyVolatilityScore = dailyMean
+        ? dailyStd / dailyMean
+        : 0
 
-    return observations.slice(0, 3)
+    const spikeThreshold = dailyMean + dailyStd
+    const spikeDays = dailyValues.filter(v => v > spikeThreshold).length
+
+    const spikeFrequency = safeDivide(spikeDays, daysInMonth)
+
+    //event
+
+    const highestDaySpend = dailyValues.length
+        ? Math.max(...dailyValues)
+        : 0
+
+    const highestExpenditureEventScore = dailyMean
+        ? highestDaySpend / dailyMean
+        : 0
+
+    return {
+        version: 1,
+
+        financial: {
+            budgetUtilization,
+            planDeviationRatio,
+            spendingDelta,
+            transactionDelta
+        },
+
+        emotion: {
+            distribution,
+            stressSpendRatio,
+            emotionalVolatilityIndex
+        },
+
+        temporal: {
+            dailyVolatilityScore,
+            spikeFrequency
+        },
+
+        event: {
+            highestExpenditureEventScore
+        }
+    }
 }
