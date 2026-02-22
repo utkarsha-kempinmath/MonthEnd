@@ -34,7 +34,7 @@ const addAllowance = async (req, res) => {
       user: req.user._id,  
       amount,
       source,
-      period,
+      period, // keep it opts not for the user to add manually
       startDate
     });
 
