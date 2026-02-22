@@ -2,7 +2,14 @@ const Expense = require('../models/expensesModel')
 
 exports.addExpense = async (req, res) => {
     try {
+        const inputDate = new Date(req.body.date);
+        const now = new Date();
 
+        if (inputDate > now) {
+            return res.status(400).json({
+                message: "Date cannot be in the future"
+            });
+        }
         const expense = await Expense.create({
             ...req.body,
             user: req.user._id
@@ -20,6 +27,14 @@ exports.addExpense = async (req, res) => {
 
 exports.updateExpense = async (req, res) => {
     try {
+        const inputDate = new Date(req.body.date);
+        const now = new Date();
+
+        if (inputDate > now) {
+            return res.status(400).json({
+                message: "Date cannot be in the future"
+            });
+        }
         const expense = await Expense.findOneAndUpdate(
             { _id: req.params.id, user: req.user._id },
             req.body,

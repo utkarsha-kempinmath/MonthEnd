@@ -17,10 +17,9 @@ exports.generateReflections = (expenses) => {
         dayMap[day] = (dayMap[day] || 0) + e.amount
         categoryMap[e.category] = (categoryMap[e.category] || 0) + e.amount
 
-        if (e.emotionTags?.length) {
-            e.emotionTags.forEach(tag => {
-                emotionMap[tag] = (emotionMap[tag] || 0) + 1
-            })
+        if (e.emotion?.primary) {
+            emotionMap[e.emotion.primary] =
+                (emotionMap[e.emotion.primary] || 0) + e.amount
         }
     })
 

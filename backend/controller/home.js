@@ -5,7 +5,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken')
 const { generateReflections } = require("../services/reflection")
 const { generateInsights } = require('../services/insightsGeneral.js')
-dotenv.config({path: './config/config.env'});
+dotenv.config({ path: './config/config.env' });
 
 const users = require("../models/userModel");
 const Expense = require('../models/expensesModel')
@@ -24,6 +24,14 @@ exports.getMonthlyReflection = async (req, res) => {
 
         const start = new Date(year, month, 1)
         const end = new Date(year, month + 1, 1)
+
+        const prevStart = new Date(year, month - 1, 1)
+        const prevEnd = new Date(year, month, 1)
+
+        const previousExpenses = await Expense.find({
+            user: userId,
+            date: { $gte: prevStart, $lt: prevEnd }
+        })
 
         const expenses = await Expense.find({
             user: userId,
@@ -118,38 +126,38 @@ exports.getMonthlyAnalysis = async (req, res) => {
 
 
 exports.getDashboard = async (req, res, next) => {
-  try {
-    const user = await users.findById(req.user._id);
+    try {
+        const user = await users.findById(req.user._id);
 
-    const expenses = user.expenses;
-    const allowance = user.allowance;
+        const expenses = user.expenses;
+        const allowance = user.allowance;
 
-    const totalIncome = allowance.reduce((acc, a) => acc + a.amount, 0);
+        const totalIncome = allowance.reduce((acc, a) => acc + a.amount, 0);
 
-    const totalSpent = expenses.reduce((acc, e) => acc + e.amount, 0);
+        const totalSpent = expenses.reduce((acc, e) => acc + e.amount, 0);
 
-    const remaining = totalIncome - totalSpent;
+        const remaining = totalIncome - totalSpent;
 
-    const categoryMap = {};
+        const categoryMap = {};
 
-    expenses.forEach(e => {
-      categoryMap[e.catagory] =
-        (categoryMap[e.catagory] || 0) + e.amount;
-    });
+        expenses.forEach(e => {
+            categoryMap[e.catagory] =
+                (categoryMap[e.catagory] || 0) + e.amount;
+        });
 
-    const categorySplit = Object.entries(categoryMap).map(
-      ([catagory, amount]) => ({ catagory, amount })
-    );
+        const categorySplit = Object.entries(categoryMap).map(
+            ([catagory, amount]) => ({ catagory, amount })
+        );
 
-    res.json({
-      success: true,
-      totalIncome,
-      totalSpent,
-      remaining,
-      categorySplit
-    });
+        res.json({
+            success: true,
+            totalIncome,
+            totalSpent,
+            remaining,
+            categorySplit
+        });
 
-  } catch (err) {
-    next(err);
-  }
+    } catch (err) {
+        next(err);
+    }
 };

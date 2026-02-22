@@ -25,11 +25,25 @@ const expenseSchema = new mongoose.Schema({
 
     note: String,
 
-    emotions: [
-        {
-            type: String
-        }
-    ]
+    emotion: {
+    primary: {
+        type: String,
+        required: true,
+        enum: [
+            "stressed",
+            "sad",
+            "happy",
+            "excited",
+            "neutral",
+            "celebrating",
+            "anxious"
+        ]
+    },
+    version: {
+        type: Number,
+        default: 1
+    }
+}
 
 }, { timestamps: true })
 
