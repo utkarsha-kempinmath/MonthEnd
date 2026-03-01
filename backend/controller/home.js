@@ -10,6 +10,8 @@ dotenv.config({ path: './config/config.env' });
 const users = require("../models/userModel");
 const Expense = require('../models/expensesModel')
 const Planning = require('../models/planningModel')
+const BehaviorSnapshot = require('../models/behaviorSnapshotModel')
+const { buildBehavioralStateInput } = require("../services/reflection")
 
 exports.getMonthlyReflection = async (req, res) => {
     try {
@@ -20,38 +22,88 @@ exports.getMonthlyReflection = async (req, res) => {
         const now = monthQuery ? new Date(monthQuery + "-01") : new Date()
 
         const year = now.getFullYear()
-        const month = now.getMonth()
+        const monthIndex = now.getMonth()
 
-        const start = new Date(year, month, 1)
-        const end = new Date(year, month + 1, 1)
+        const start = new Date(year, monthIndex, 1)
+        const end = new Date(year, monthIndex + 1, 1)
 
-        const prevStart = new Date(year, month - 1, 1)
-        const prevEnd = new Date(year, month, 1)
+        const prevStart = new Date(year, monthIndex - 1, 1)
+        const prevEnd = new Date(year, monthIndex, 1)
 
-        const previousExpenses = await Expense.find({
+        const [expenses, previousExpenses, plan] = await Promise.all([
+            Expense.find({ user: userId, date: { $gte: start, $lt: end } }),
+            Expense.find({ user: userId, date: { $gte: prevStart, $lt: prevEnd } }),
+            Planning.findOne({ user: userId, month: monthQuery })
+        ])
+
+        const monthString = monthQuery
+            ? monthQuery
+            : `${year}-${String(monthIndex + 1).padStart(2, '0')}`
+
+        const existingSnapshot = await BehaviorSnapshot.findOne({
             user: userId,
-            date: { $gte: prevStart, $lt: prevEnd }
+            month: monthString
         })
 
-        const expenses = await Expense.find({
-            user: userId,
-            date: { $gte: start, $lt: end }
-        })
+        const currentNow = new Date()
+        const currentMonthString = `${currentNow.getFullYear()}-${String(currentNow.getMonth() + 1).padStart(2, '0')}`
 
-        // daily trend
-        const dailyTrend = new Array(31).fill(0)
+        if (existingSnapshot && monthString !== currentMonthString) {
+            return res.json({
+                success: true,
+                dailyTrend,
+                stateInput: existingSnapshot.stateInput,
+                mlOutput: existingSnapshot.mlOutput
+            })
+        }
+
+        const daysInMonth = new Date(year, monthIndex + 1, 0).getDate()
+        const dailyTrend = new Array(daysInMonth).fill(0)
 
         expenses.forEach(e => {
             const day = new Date(e.date).getDate()
             dailyTrend[day - 1] += e.amount
         })
 
-        const observations = generateReflections(expenses)
+        const stateInput = buildBehavioralStateInput({
+            currentExpenses: expenses,
+            previousExpenses,
+            currentPlan: plan,
+            year,
+            monthIndex: monthIndex + 1
+        })
+
+        if (!stateInput) {
+            return res.json({
+                success: true,
+                dailyTrend,
+                reflections: ["No spending data for this month yet."]
+            })
+        }
+
+        // TEMP ML (Replace later)
+        const mlOutput = {
+            riskScores: {
+                overspendRisk: stateInput.financial.budgetUtilization > 1 ? 0.8 : 0.3
+            },
+            anomalyFlag: stateInput.event.highestExpenditureEventScore > 3
+        }
+
+        await BehaviorSnapshot.findOneAndUpdate(
+            { user: userId, month: monthQuery },
+            {
+                version: 1,
+                stateInput,
+                mlOutput
+            },
+            { upsert: true, new: true }
+        )
 
         res.json({
             success: true,
             dailyTrend,
-            observations
+            stateInput,
+            mlOutput
         })
 
     } catch (err) {

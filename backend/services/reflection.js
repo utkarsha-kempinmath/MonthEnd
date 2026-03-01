@@ -1,3 +1,8 @@
+/**
+ * Helper: Calculate standard deviation of an array
+ * Used to measure dispersion in daily spending.
+ * If no values, return 0 to avoid NaN.
+ */
 const calculateStdDev = (arr) => {
     if (!arr.length) return 0
 
@@ -6,11 +11,24 @@ const calculateStdDev = (arr) => {
     return Math.sqrt(variance)
 }
 
+/**
+ * Safe division helper.
+ * Prevents division by zero errors.
+ * Returns 0 when denominator is 0.
+ */
 const safeDivide = (a, b) => {
     if (!b) return 0
     return a / b
 }
 
+/**
+ * Builds structured Behavioral State Vector for a given month.
+ * 
+ * This function converts raw transaction data into a normalized
+ * feature representation suitable for ML modeling.
+ * 
+ * No raw user data is exposed beyond aggregated signals.
+ */
 exports.buildBehavioralStateInput = ({
     currentExpenses = [],
     previousExpenses = [],
@@ -19,9 +37,11 @@ exports.buildBehavioralStateInput = ({
     monthIndex
 }) => {
 
+    // If no expenses for current month, no behavioral state exists
     if (!currentExpenses.length) return null
 
-    //basic
+
+    // BASIC AGGREGATES
 
     const totalSpent = currentExpenses.reduce((sum, e) => sum + e.amount, 0)
     const prevTotalSpent = previousExpenses.reduce((sum, e) => sum + e.amount, 0)
@@ -31,24 +51,56 @@ exports.buildBehavioralStateInput = ({
     const transactionCount = currentExpenses.length
     const prevTransactionCount = previousExpenses.length
 
-    //financial
 
+    // FINANCIAL FEATURES
+
+    /**
+     * budgetUtilization
+     * Ratio of spending to allocated budget.
+     * > 1  → overspending
+     * ~ 1 → near limit
+     * < 1 → within budget
+     */
     const budgetUtilization = safeDivide(totalSpent, totalBudget)
 
+    /**
+     * planDeviationRatio
+     * Measures proportional deviation from plan.
+     * Positive → exceeded plan
+     * Negative → under plan
+     */
     const planDeviationRatio = totalBudget
         ? (totalSpent - totalBudget) / totalBudget
         : 0
 
+    /**
+     * spendingDelta
+     * Month-over-month proportional change in total spending.
+     * Positive → spending increased
+     * Negative → spending decreased
+     */
     const spendingDelta = prevTotalSpent
         ? (totalSpent - prevTotalSpent) / prevTotalSpent
         : 0
 
+    /**
+     * transactionDelta
+     * Month-over-month change in transaction count.
+     * Indicates behavioral frequency shift.
+     */
     const transactionDelta = prevTransactionCount
         ? (transactionCount - prevTransactionCount) / prevTransactionCount
         : 0
 
-    //emotional
 
+    // EMOTIONAL FEATURES
+    
+
+    /**
+     * emotionTotals:
+     * Aggregates total spend per emotion for current month.
+     * Uses primary emotion tag per transaction.
+     */
     const emotionTotals = {}
     const prevEmotionTotals = {}
 
@@ -66,27 +118,53 @@ exports.buildBehavioralStateInput = ({
         }
     })
 
+    /**
+     * Combine all emotion keys from both months.
+     * Ensures volatility captures new/disappeared emotions.
+     */
     const allEmotions = new Set([
         ...Object.keys(emotionTotals),
         ...Object.keys(prevEmotionTotals)
     ])
 
+    /**
+     * distribution:
+     * Proportion of total spending under each emotion.
+     * Values sum approximately to 1.
+     */
     const distribution = {}
 
     allEmotions.forEach(emo => {
         distribution[emo] = safeDivide(emotionTotals[emo] || 0, totalSpent)
     })
 
+    /**
+     * stressSpendRatio:
+     * Special feature capturing proportion of spending under "stressed".
+     * Direct proxy for emotional financial pressure.
+     */
     const stressSpendRatio = safeDivide(emotionTotals["stressed"] || 0, totalSpent)
 
+    /**
+     * emotionalVolatilityIndex:
+     * Sum of absolute differences in emotion distributions
+     * between current and previous month.
+     * 
+     * Higher value → greater emotional shift in spending behavior.
+     */
     const emotionalVolatilityIndex = [...allEmotions].reduce((sum, emo) => {
         const currRatio = safeDivide(emotionTotals[emo] || 0, totalSpent)
         const prevRatio = safeDivide(prevEmotionTotals[emo] || 0, prevTotalSpent)
         return sum + Math.abs(currRatio - prevRatio)
     }, 0)
 
-    //temporal
 
+    // TEMPORAL FEATURES
+
+    /**
+     * dailyMap:
+     * Aggregates spending per calendar day.
+     */
     const dailyMap = {}
 
     currentExpenses.forEach(e => {
@@ -96,22 +174,43 @@ exports.buildBehavioralStateInput = ({
 
     const dailyValues = Object.values(dailyMap)
 
+    /**
+     * daysInMonth:
+     * Used for normalization and volatility scaling.
+     */
     const daysInMonth = new Date(year, monthIndex, 0).getDate()
 
     const dailyStd = calculateStdDev(dailyValues)
     const dailyMean = safeDivide(totalSpent, daysInMonth)
 
+    /**
+     * dailyVolatilityScore:
+     * Coefficient of variation (std / mean).
+     * Measures irregularity in spending distribution.
+     */
     const dailyVolatilityScore = dailyMean
         ? dailyStd / dailyMean
         : 0
 
+    /**
+     * spikeFrequency:
+     * Fraction of days where spending exceeded (mean + std).
+     * Captures frequency of abnormal high-spend days.
+     */
     const spikeThreshold = dailyMean + dailyStd
     const spikeDays = dailyValues.filter(v => v > spikeThreshold).length
-
     const spikeFrequency = safeDivide(spikeDays, daysInMonth)
 
-    //event
 
+    // EVENT FEATURE
+
+    /**
+     * highestExpenditureEventScore:
+     * Ratio of maximum daily spend to average daily spend.
+     * 
+     * > 1  → peak day above average
+     * >> 1 → extreme spending event
+     */
     const highestDaySpend = dailyValues.length
         ? Math.max(...dailyValues)
         : 0
@@ -120,8 +219,11 @@ exports.buildBehavioralStateInput = ({
         ? highestDaySpend / dailyMean
         : 0
 
+        
+    // FINAL STRUCTURED STATE VECTOR
+
     return {
-        version: 1,
+        version: 1, // Feature schema version
 
         financial: {
             budgetUtilization,
@@ -146,3 +248,8 @@ exports.buildBehavioralStateInput = ({
         }
     }
 }
+// this goes to ml nd ml returns: 
+// risk scores
+// anomaly detection
+// patterns
+// predictions

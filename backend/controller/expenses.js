@@ -1,87 +1,194 @@
-const Expense = require('../models/expensesModel')
+const Expense = require("../models/expensesModel")
+
+// Allowed emotions (same as schema enum)
+const allowedEmotions = [
+  "stressed",
+  "sad",
+  "happy",
+  "excited",
+  "neutral",
+  "celebrating",
+  "anxious"
+]
 
 exports.addExpense = async (req, res) => {
-    try {
-        const inputDate = new Date(req.body.date);
-        const now = new Date();
+  try {
+    const { amount, date, category, note, emotion } = req.body
 
-        if (inputDate > now) {
-            return res.status(400).json({
-                message: "Date cannot be in the future"
-            });
-        }
-        const expense = await Expense.create({
-            ...req.body,
-            user: req.user._id
-        })
-
-        res.status(201).json({
-            success: true,
-            expense
-        })
-
-    } catch (err) {
-        res.status(500).json({ error: err.message })
+    if (!amount || !category || !emotion?.primary) {
+      return res.status(400).json({
+        success: false,
+        message: "Amount, category and emotion.primary are required"
+      })
     }
+
+    if (amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Amount must be greater than 0"
+      })
+    }
+
+    if (!allowedEmotions.includes(emotion.primary)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid emotion type"
+      })
+    }
+
+    const inputDate = date ? new Date(date) : new Date()
+
+    if (inputDate > new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: "Date cannot be in the future"
+      })
+    }
+
+    const expense = await Expense.create({
+      user: req.user._id,
+      amount,
+      category,
+      date: inputDate,
+      note: note || "",
+      emotion: {
+        primary: emotion.primary
+        // version auto defaults to 1
+      }
+    })
+
+    return res.status(201).json({
+      success: true,
+      expense
+    })
+
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message
+    })
+  }
 }
 
 exports.updateExpense = async (req, res) => {
-    try {
-        const inputDate = new Date(req.body.date);
-        const now = new Date();
+  try {
+    const { id } = req.params
+    const { amount, category, date, note, emotion } = req.body
 
-        if (inputDate > now) {
-            return res.status(400).json({
-                message: "Date cannot be in the future"
-            });
-        }
-        const expense = await Expense.findOneAndUpdate(
-            { _id: req.params.id, user: req.user._id },
-            req.body,
-            { new: true }
-        )
+    const expense = await Expense.findOne({
+      _id: id,
+      user: req.user._id
+    })
 
-        res.json({
-            success: true,
-            expense
-        })
-
-    } catch (err) {
-        res.status(500).json({ error: err.message })
+    if (!expense) {
+      return res.status(404).json({
+        success: false,
+        message: "Expense not found"
+      })
     }
+
+    if (amount !== undefined) {
+      if (amount <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Amount must be greater than 0"
+        })
+      }
+      expense.amount = amount
+    }
+
+    if (category !== undefined) {
+      expense.category = category
+    }
+
+    if (note !== undefined) {
+      expense.note = note
+    }
+
+    if (date !== undefined) {
+      const inputDate = new Date(date)
+      if (inputDate > new Date()) {
+        return res.status(400).json({
+          success: false,
+          message: "Date cannot be in the future"
+        })
+      }
+      expense.date = inputDate
+    }
+
+    if (emotion?.primary) {
+      if (!allowedEmotions.includes(emotion.primary)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid emotion type"
+        })
+      }
+
+      expense.emotion.primary = emotion.primary
+      expense.emotion.version += 1
+    }
+
+    await expense.save()
+
+    return res.status(200).json({
+      success: true,
+      expense
+    })
+
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message
+    })
+  }
 }
 
 exports.deleteExpense = async (req, res) => {
-    try {
-        await Expense.findOneAndDelete({
-            _id: req.params.id,
-            user: req.user._id
-        })
+  try {
+    const { id } = req.params
 
-        res.json({
-            success: true,
-            message: "Expense deleted"
-        })
+    const expense = await Expense.findOneAndDelete({
+      _id: id,
+      user: req.user._id
+    })
 
-    } catch (err) {
-        res.status(500).json({ error: err.message })
+    if (!expense) {
+      return res.status(404).json({
+        success: false,
+        message: "Expense not found"
+      })
     }
+
+    return res.status(200).json({
+      success: true,
+      message: "Expense deleted successfully"
+    })
+
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message
+    })
+  }
 }
 
 
 exports.getExpenses = async (req, res) => {
-    try {
+  try {
+    const expenses = await Expense.find({
+      user: req.user._id
+    }).sort({ date: -1 })
 
-        const expenses = await Expense.find({
-            user: req.user._id
-        }).sort({ date: -1 })
+    return res.status(200).json({
+      success: true,
+      count: expenses.length,
+      expenses
+    })
 
-        res.json({
-            success: true,
-            expenses
-        })
-
-    } catch (err) {
-        res.status(500).json({ error: err.message })
-    }
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message
+    })
+  }
 }

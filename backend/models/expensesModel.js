@@ -4,7 +4,7 @@ const expenseSchema = new mongoose.Schema({
 
     user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'user',
+        ref: 'User',
         required: true
     },
 
@@ -47,4 +47,4 @@ const expenseSchema = new mongoose.Schema({
 
 }, { timestamps: true })
 
-module.exports = mongoose.model('expense', expenseSchema)
+module.exports = mongoose.model('Expense', expenseSchema)

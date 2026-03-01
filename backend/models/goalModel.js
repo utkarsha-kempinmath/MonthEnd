@@ -3,7 +3,7 @@ const mongoose = require("mongoose")
 const goalSchema = mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "user",
+        ref: "User",
         required: true
     },
     name: {

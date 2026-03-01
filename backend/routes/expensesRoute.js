@@ -1,12 +1,18 @@
-const express = require('express')
+const express = require("express")
 const router = express.Router()
 
-const isLoggedIn = require('../middleware/auth')
-const controller = require('../controller/expenses')
+const isLoggedIn = require("../middleware/auth")
 
-router.post('/', isLoggedIn, controller.addExpense)
-router.get('/', isLoggedIn, controller.getExpenses)
-router.patch('/:id', isLoggedIn, controller.updateExpense)
-router.delete('/:id', isLoggedIn, controller.deleteExpense)
+const {
+  addExpense,
+  updateExpense,
+  deleteExpense,
+  getExpenses
+} = require("../controller/expenses")
+
+router.post("/add", isLoggedIn, addExpense)
+router.put("/:id", isLoggedIn, updateExpense)
+router.delete("/:id", isLoggedIn, deleteExpense)
+router.get("/", isLoggedIn, getExpenses)
 
 module.exports = router
