@@ -178,38 +178,54 @@ exports.getMonthlyAnalysis = async (req, res) => {
 
 
 exports.getDashboard = async (req, res, next) => {
-    try {
-        const user = await users.findById(req.user._id);
+  try {
+    const userId = req.user._id
 
-        const expenses = user.expenses;
-        const allowance = user.allowance;
+    const now = new Date()
+    const year = now.getFullYear()
+    const monthIndex = now.getMonth()
 
-        const totalIncome = allowance.reduce((acc, a) => acc + a.amount, 0);
+    const start = new Date(year, monthIndex, 1)
+    const end = new Date(year, monthIndex + 1, 1)
 
-        const totalSpent = expenses.reduce((acc, e) => acc + e.amount, 0);
+    const expenses = await Expense.find({
+      user: userId,
+      date: { $gte: start, $lt: end }
+    })
 
-        const remaining = totalIncome - totalSpent;
+    const plan = await Planning.findOne({
+      user: userId,
+      month: `${year}-${String(monthIndex + 1).padStart(2, "0")}`
+    })
 
-        const categoryMap = {};
+    const totalIncome = plan
+      ? plan.categories.reduce((acc, c) => acc + c.amount, 0)
+      : 0
 
-        expenses.forEach(e => {
-            categoryMap[e.catagory] =
-                (categoryMap[e.catagory] || 0) + e.amount;
-        });
+    const totalSpent = expenses.reduce((acc, e) => acc + e.amount, 0)
 
-        const categorySplit = Object.entries(categoryMap).map(
-            ([catagory, amount]) => ({ catagory, amount })
-        );
+    const remaining = totalIncome - totalSpent
 
-        res.json({
-            success: true,
-            totalIncome,
-            totalSpent,
-            remaining,
-            categorySplit
-        });
+    const categoryMap = {}
 
-    } catch (err) {
-        next(err);
-    }
-};
+    expenses.forEach(e => {
+      categoryMap[e.category] =
+        (categoryMap[e.category] || 0) + e.amount
+    })
+
+    const categorySplit = Object.entries(categoryMap).map(
+      ([category, amount]) => ({ category, amount })
+    )
+
+    res.json({
+      success: true,
+      totalIncome,
+      totalSpent,
+      remaining,
+      categorySplit
+    })
+
+  } catch (err) {
+    next(err)
+  }
+}
