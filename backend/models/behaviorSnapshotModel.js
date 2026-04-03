@@ -24,7 +24,63 @@ const behaviorSnapshotSchema = new mongoose.Schema({
 
     mlOutput: {
         type: Object,
-        default: null
+
+        risk: {
+            level,
+            overspendingProbability,
+            financialInstabilityScore
+        },
+
+        financialPosition: {
+            spent,
+            budget,
+            remaining,
+            daysLeft,
+            avgDailySpend
+        },
+
+        affordability: {
+            canAfford,
+            safeLimit,
+            dangerLimit
+        },
+
+        forecast: {
+            projectedSpend,
+            remainingBuffer,
+            confidence
+        },
+
+        goalStatus: {
+            progress,
+            onTrack
+        },
+
+        impact: {
+            delayAmount,
+            delayRisk,
+            budgetImpact,
+            goalImpact,
+            behaviorRisk
+        },
+
+        behavioral: {
+            dominantPattern,
+            trigger,
+            consistencyScore
+        },
+
+        predictions: {
+            endOfMonthBalance,
+            goalAchievementProbability
+        },
+
+        anomalies,
+
+        insights: {
+            summary,
+            tags
+        }
     }
 
 }, { timestamps: true });
