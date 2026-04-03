@@ -12,6 +12,10 @@ const Expense = require('../models/expensesModel')
 const Planning = require('../models/planningModel')
 const BehaviorSnapshot = require('../models/behaviorSnapshotModel')
 const { buildBehavioralStateInput } = require("../services/reflection")
+const Calendar = require('../models/calendarModel')
+const BehaviorProfile = require('../models/behaviorProfileModel')
+const Goal = require("../models/goalModel")
+const Allowance = require("../models/allowanceModel")
 
 exports.getMonthlyReflection = async (req, res) => {
     try {
@@ -30,15 +34,60 @@ exports.getMonthlyReflection = async (req, res) => {
         const prevStart = new Date(year, monthIndex - 1, 1)
         const prevEnd = new Date(year, monthIndex, 1)
 
-        const [expenses, previousExpenses, plan] = await Promise.all([
-            Expense.find({ user: userId, date: { $gte: start, $lt: end } }),
-            Expense.find({ user: userId, date: { $gte: prevStart, $lt: prevEnd } }),
-            Planning.findOne({ user: userId, month: monthQuery })
-        ])
+        const goals = await Goal.find({ user: req.user._id })
 
+        const allowance = await Allowance.findOne({ user: req.user._id })
+
+        const formattedGoals = goals.map(g => ({
+            targetAmount: g.targetAmount,
+            savedAmount: g.savedAmount,
+            timelineMonths: g.timelineMonths
+        }))
+
+        const totalTarget = goals.reduce((sum, g) => sum + g.targetAmount, 0)
+
+        const totalSaved = goals.reduce((sum, g) => sum + g.savedAmount, 0)
+
+        const avgTimeline = goals.length
+            ? goals.reduce((sum, g) => sum + g.timelineMonths, 0) / goals.length
+            : 0
+
+        const goalCount = goals.length
+
+        const pressureScore = totalTarget
+            ? (totalTarget - totalSaved) / totalTarget
+            : 0
+
+        const aggregatedGoals = {
+            totalTarget,
+            totalSaved,
+            avgTimeline,
+            goalCount,
+            pressureScore
+        }
         const monthString = monthQuery
             ? monthQuery
             : `${year}-${String(monthIndex + 1).padStart(2, '0')}`
+
+        const [expenses, previousExpenses, plan, events, profileDoc] = await Promise.all([
+            Expense.find({ user: userId, date: { $gte: start, $lt: end } }),
+            Expense.find({ user: userId, date: { $gte: prevStart, $lt: prevEnd } }),
+            Planning.findOne({ user: userId, month: monthString }),
+            Calendar.find({ user: userId, startDate: { $gte: start, $lt: end } }),
+            BehaviorProfile.findOne({ user: userId })
+        ])
+
+        const profile = profileDoc ? profileDoc.traits : null
+
+        const examCount = events.filter(e => e.eventType === 'exam').length
+        const festCount = events.filter(e => e.eventType === 'fest').length
+        const otherEventCount = events.length - examCount - festCount
+
+        const eventContext = {
+            examCount,
+            festCount,
+            otherEventCount
+        }
 
         const existingSnapshot = await BehaviorSnapshot.findOne({
             user: userId,
@@ -47,6 +96,15 @@ exports.getMonthlyReflection = async (req, res) => {
 
         const currentNow = new Date()
         const currentMonthString = `${currentNow.getFullYear()}-${String(currentNow.getMonth() + 1).padStart(2, '0')}`
+
+        // 🔧 moved dailyTrend ABOVE (bug fix)
+        const daysInMonth = new Date(year, monthIndex + 1, 0).getDate()
+        const dailyTrend = new Array(daysInMonth).fill(0)
+
+        expenses.forEach(e => {
+            const day = new Date(e.date).getDate()
+            dailyTrend[day - 1] += e.amount
+        })
 
         if (existingSnapshot && monthString !== currentMonthString) {
             return res.json({
@@ -57,20 +115,12 @@ exports.getMonthlyReflection = async (req, res) => {
             })
         }
 
-        const daysInMonth = new Date(year, monthIndex + 1, 0).getDate()
-        const dailyTrend = new Array(daysInMonth).fill(0)
-
-        expenses.forEach(e => {
-            const day = new Date(e.date).getDate()
-            dailyTrend[day - 1] += e.amount
-        })
-
         const stateInput = buildBehavioralStateInput({
             currentExpenses: expenses,
             previousExpenses,
             currentPlan: plan,
             year,
-            monthIndex: monthIndex + 1
+            monthIndex
         })
 
         if (!stateInput) {
@@ -81,19 +131,50 @@ exports.getMonthlyReflection = async (req, res) => {
             })
         }
 
-        // TEMP ML (Replace later)
-        const mlOutput = {
-            riskScores: {
-                overspendRisk: stateInput.financial.budgetUtilization > 1 ? 0.8 : 0.3
-            },
-            anomalyFlag: stateInput.event.highestExpenditureEventScore > 3
+        const enrichedState = {
+            ...stateInput,
+            eventContext
         }
 
+        const mlInput = {
+            state: enrichedState,
+            goals: aggregatedGoals,
+            allowance: formattedAllowance,
+            profile
+        }
+
+        const mlOutput = {
+            risk: {
+                overspendingProbability:
+                    mlInput.state.financial.budgetUtilization > 1 ? 0.8 : 0.3
+            },
+
+            behavioral: {
+                dominantPattern:
+                    mlInput.state.emotion.stressSpendRatio > 0.5
+                        ? "emotional_spending"
+                        : "controlled",
+            },
+
+            anomalies: [
+                mlInput.state.event.highestExpenditureEventScore > 3
+                    ? { type: "event_spike", severity: 0.7 }
+                    : null
+            ].filter(Boolean),
+
+            insights: {
+                summary: "basic rule-based insight"
+            }
+        }
+
+        // 🔧 fixed monthQuery → monthString
         await BehaviorSnapshot.findOneAndUpdate(
-            { user: userId, month: monthQuery },
+            { user: userId, month: monthString },
             {
                 version: 1,
-                stateInput,
+                stateInput: enrichedState,
+                profileInput: profile,
+                mlInput,    
                 mlOutput
             },
             { upsert: true, new: true }
@@ -102,7 +183,7 @@ exports.getMonthlyReflection = async (req, res) => {
         res.json({
             success: true,
             dailyTrend,
-            stateInput,
+            stateInput: enrichedState,
             mlOutput
         })
 
@@ -116,7 +197,7 @@ exports.getMonthlyAnalysis = async (req, res) => {
 
         const userId = req.user._id
 
-        let { month } = req.query   // "2026-02"
+        let { month } = req.query
 
         const now = new Date()
 
@@ -176,56 +257,55 @@ exports.getMonthlyAnalysis = async (req, res) => {
     }
 }
 
-
 exports.getDashboard = async (req, res, next) => {
-  try {
-    const userId = req.user._id
+    try {
+        const userId = req.user._id
 
-    const now = new Date()
-    const year = now.getFullYear()
-    const monthIndex = now.getMonth()
+        const now = new Date()
+        const year = now.getFullYear()
+        const monthIndex = now.getMonth()
 
-    const start = new Date(year, monthIndex, 1)
-    const end = new Date(year, monthIndex + 1, 1)
+        const start = new Date(year, monthIndex, 1)
+        const end = new Date(year, monthIndex + 1, 1)
 
-    const expenses = await Expense.find({
-      user: userId,
-      date: { $gte: start, $lt: end }
-    })
+        const expenses = await Expense.find({
+            user: userId,
+            date: { $gte: start, $lt: end }
+        })
 
-    const plan = await Planning.findOne({
-      user: userId,
-      month: `${year}-${String(monthIndex + 1).padStart(2, "0")}`
-    })
+        const plan = await Planning.findOne({
+            user: userId,
+            month: `${year}-${String(monthIndex + 1).padStart(2, "0")}`
+        })
 
-    const totalIncome = plan
-      ? plan.categories.reduce((acc, c) => acc + c.amount, 0)
-      : 0
+        const totalIncome = plan
+            ? plan.categories.reduce((acc, c) => acc + c.amount, 0)
+            : 0
 
-    const totalSpent = expenses.reduce((acc, e) => acc + e.amount, 0)
+        const totalSpent = expenses.reduce((acc, e) => acc + e.amount, 0)
 
-    const remaining = totalIncome - totalSpent
+        const remaining = totalIncome - totalSpent
 
-    const categoryMap = {}
+        const categoryMap = {}
 
-    expenses.forEach(e => {
-      categoryMap[e.category] =
-        (categoryMap[e.category] || 0) + e.amount
-    })
+        expenses.forEach(e => {
+            categoryMap[e.category] =
+                (categoryMap[e.category] || 0) + e.amount
+        })
 
-    const categorySplit = Object.entries(categoryMap).map(
-      ([category, amount]) => ({ category, amount })
-    )
+        const categorySplit = Object.entries(categoryMap).map(
+            ([category, amount]) => ({ category, amount })
+        )
 
-    res.json({
-      success: true,
-      totalIncome,
-      totalSpent,
-      remaining,
-      categorySplit
-    })
+        res.json({
+            success: true,
+            totalIncome,
+            totalSpent,
+            remaining,
+            categorySplit
+        })
 
-  } catch (err) {
-    next(err)
-  }
+    } catch (err) {
+        next(err)
+    }
 }

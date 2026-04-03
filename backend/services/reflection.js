@@ -32,7 +32,7 @@ const safeDivide = (a, b) => {
 exports.buildBehavioralStateInput = ({
     currentExpenses = [],
     previousExpenses = [],
-    currentPlan = { totalBudget: 0 },
+    currentPlan = { total: 0 },
     year,
     monthIndex
 }) => {
@@ -46,7 +46,7 @@ exports.buildBehavioralStateInput = ({
     const totalSpent = currentExpenses.reduce((sum, e) => sum + e.amount, 0)
     const prevTotalSpent = previousExpenses.reduce((sum, e) => sum + e.amount, 0)
 
-    const totalBudget = currentPlan.totalBudget || 0
+    const totalBudget = currentPlan.total || 0
 
     const transactionCount = currentExpenses.length
     const prevTransactionCount = previousExpenses.length
@@ -94,7 +94,7 @@ exports.buildBehavioralStateInput = ({
 
 
     // EMOTIONAL FEATURES
-    
+
 
     /**
      * emotionTotals:
@@ -126,6 +126,19 @@ exports.buildBehavioralStateInput = ({
         ...Object.keys(emotionTotals),
         ...Object.keys(prevEmotionTotals)
     ])
+
+    const categoryTotals = {}
+
+    currentExpenses.forEach(e => {
+        categoryTotals[e.category] =
+            (categoryTotals[e.category] || 0) + e.amount
+    })
+
+    const categoryDistribution = {}
+
+    Object.keys(categoryTotals).forEach(cat => {
+        categoryDistribution[cat] = safeDivide(categoryTotals[cat], totalSpent)
+    })
 
     /**
      * distribution:
@@ -178,7 +191,7 @@ exports.buildBehavioralStateInput = ({
      * daysInMonth:
      * Used for normalization and volatility scaling.
      */
-    const daysInMonth = new Date(year, monthIndex, 0).getDate()
+    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate()
 
     const dailyStd = calculateStdDev(dailyValues)
     const dailyMean = safeDivide(totalSpent, daysInMonth)
@@ -219,7 +232,7 @@ exports.buildBehavioralStateInput = ({
         ? highestDaySpend / dailyMean
         : 0
 
-        
+
     // FINAL STRUCTURED STATE VECTOR
 
     return {
@@ -238,6 +251,10 @@ exports.buildBehavioralStateInput = ({
             emotionalVolatilityIndex
         },
 
+        category: {
+            distribution: categoryDistribution
+        },
+
         temporal: {
             dailyVolatilityScore,
             spikeFrequency
@@ -248,8 +265,8 @@ exports.buildBehavioralStateInput = ({
         }
     }
 }
-// this goes to ml nd ml returns: 
+// this goes to ml nd ml returns:
 // risk scores
 // anomaly detection
-// patterns
+// patterns: impulseTrait, stressTrait/emotionTrait, eventScore
 // predictions

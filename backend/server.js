@@ -12,6 +12,7 @@ const calendarRoute = require('./routes/calendarRoute')
 const planningRoute = require('./routes/planningRoute')
 const expensesRoute = require('./routes/expensesRoute')
 const goalRoute = require('./routes/goalRoute')
+const behaviorProfileRoute = require('./routes/behaviorProfileRoute')
 
 
 dotenv.config({path: './config/config.env'});
@@ -28,6 +29,7 @@ app.use('/api/calendar', calendarRoute)
 app.use('/api/planning', planningRoute)
 app.use('/api/expenses', expensesRoute)
 app.use('/api/goals', goalRoute)
+app.use('/api/profile', behaviorProfileRoute)
 
 app.use(
   cors({

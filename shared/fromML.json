@@ -1,0 +1,30 @@
+{
+  risk: {
+    overspendingProbability,     // 0 → 1
+    financialInstabilityScore    // composite
+  },
+
+  behavioral: {
+    dominantPattern,             // "stress_spending"
+    trigger: "exam_period",
+    consistencyScore
+  },
+
+  predictions: {
+    endOfMonthBalance,
+    goalAchievementProbability
+  },
+
+  anomalies: [
+    {
+      type: "spike",
+      category: "food",
+      severity: 0.7
+    }
+  ],
+
+  insights: {
+    summary: "You tend to overspend during stressful academic periods.",
+    tags: ["emotional", "exam-driven", "spikes"]
+  }
+}

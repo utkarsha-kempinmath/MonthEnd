@@ -1,0 +1,55 @@
+{
+  meta: {
+    userId,
+    month: "2026-04",
+    schemaVersion: 1
+  },
+
+  state: {
+    financial: {
+      budgetUtilization,        // from reflection
+      planDeviationRatio,
+      spendingDelta,
+      transactionDelta
+    },
+
+    emotion: {
+      distribution,             // { happy: 0.3, stressed: 0.5, ... }
+      stressSpendRatio,
+      emotionalVolatilityIndex
+    },
+
+    category: {
+      distribution             // categoryDistribution
+    },
+
+    temporal: {
+      dailyVolatilityScore,
+      spikeFrequency
+    },
+
+    event: {
+      highestExpenditureEventScore
+    }
+  },
+
+  profile: {
+    impulsivity,
+    planning,
+    emotionalSpending,
+    socialInfluence
+  },
+
+  goals: 
+    {
+      targetAmount,
+      savedAmount,
+      timelineMonths
+    }
+  ,
+
+  allowance: {
+    amount,
+    period
+  }
+}
