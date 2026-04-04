@@ -23,10 +23,10 @@ exports.getMonthlyReflection = async (req, res) => {
         const userId = req.user._id
         const monthQuery = req.query.month
 
-        const now = monthQuery ? new Date(monthQuery + "-01") : new Date()
+        const baseDate = monthQuery ? new Date(monthQuery + "-01") : new Date()
 
-        const year = now.getFullYear()
-        const monthIndex = now.getMonth()
+        const year = baseDate.getFullYear()
+        const monthIndex = baseDate.getMonth()
 
         const start = new Date(year, monthIndex, 1)
         const end = new Date(year, monthIndex + 1, 1)
@@ -38,11 +38,24 @@ exports.getMonthlyReflection = async (req, res) => {
 
         const allowance = await Allowance.findOne({ user: req.user._id })
 
-        const formattedGoals = goals.map(g => ({
-            targetAmount: g.targetAmount,
-            savedAmount: g.savedAmount,
-            timelineMonths: g.timelineMonths
-        }))
+        const totalSpent = expenses.reduce((sum, e) => sum + e.amount, 0)
+
+        const formattedAllowance = allowance
+            ? {
+                monthlyAllowance: allowance.amount || 0,
+                totalSpent,
+                remaining: (allowance.amount || 0) - totalSpent,
+                utilization:
+                    allowance.amount > 0
+                        ? totalSpent / allowance.amount
+                        : 0
+            }
+            : {
+                monthlyAllowance: 0,
+                totalSpent,
+                remaining: -totalSpent,
+                utilization: 0
+            }
 
         const totalTarget = goals.reduce((sum, g) => sum + g.targetAmount, 0)
 
@@ -73,7 +86,19 @@ exports.getMonthlyReflection = async (req, res) => {
             Expense.find({ user: userId, date: { $gte: start, $lt: end } }),
             Expense.find({ user: userId, date: { $gte: prevStart, $lt: prevEnd } }),
             Planning.findOne({ user: userId, month: monthString }),
-            Calendar.find({ user: userId, startDate: { $gte: start, $lt: end } }),
+            Calendar.find({
+                user: userId,
+                $or: [
+                    {
+                        startDate: { $lte: end },
+                        endDate: { $gte: start }
+                    },
+                    {
+                        startDate: { $lte: end },
+                        endDate: null
+                    }
+                ]
+            }),
             BehaviorProfile.findOne({ user: userId })
         ])
 
@@ -83,10 +108,68 @@ exports.getMonthlyReflection = async (req, res) => {
         const festCount = events.filter(e => e.eventType === 'fest').length
         const otherEventCount = events.length - examCount - festCount
 
+        const now = new Date()
+
+        let daysToNextEvent = Infinity
+        let daysSinceLastEvent = Infinity
+        let isEventActive = false
+
+        let totalEventDays = 0
+        let weightedIntensitySum = 0
+
+        const intensityMap = {
+            exam: 0.9,
+            submission: 0.7,
+            fest: 0.8,
+            other: 0.5
+        }
+
+        events.forEach(e => {
+            const start = new Date(e.startDate)
+            const endDate = e.endDate ? new Date(e.endDate) : start
+
+            const duration =
+                Math.max(1, (endDate - start) / (1000 * 60 * 60 * 24) + 1)
+
+            totalEventDays += duration
+
+            const intensity = intensityMap[e.eventType] || 0.5
+            weightedIntensitySum += intensity * duration
+
+            // ACTIVE EVENT
+            if (now >= start && now <= endDate) {
+                isEventActive = true
+            }
+
+            // UPCOMING
+            if (start >= now) {
+                const diff = (start - now) / (1000 * 60 * 60 * 24)
+                daysToNextEvent = Math.min(daysToNextEvent, diff)
+            }
+
+            // PAST
+            if (endDate <= now) {
+                const diff = (now - endDate) / (1000 * 60 * 60 * 24)
+                daysSinceLastEvent = Math.min(daysSinceLastEvent, diff)
+            }
+        })
+
+        const eventIntensityScore =
+            totalEventDays > 0
+                ? weightedIntensitySum / totalEventDays
+                : 0
+
         const eventContext = {
             examCount,
             festCount,
-            otherEventCount
+            otherEventCount,
+
+            isEventActive,
+            daysToNextEvent: isFinite(daysToNextEvent) ? daysToNextEvent : null,
+            daysSinceLastEvent: isFinite(daysSinceLastEvent) ? daysSinceLastEvent : null,
+
+            totalEventDays,
+            eventIntensityScore
         }
 
         const existingSnapshot = await BehaviorSnapshot.findOne({
@@ -110,6 +193,7 @@ exports.getMonthlyReflection = async (req, res) => {
             return res.json({
                 success: true,
                 dailyTrend,
+                eventContext,
                 stateInput: existingSnapshot.stateInput,
                 mlOutput: existingSnapshot.mlOutput
             })
@@ -174,7 +258,7 @@ exports.getMonthlyReflection = async (req, res) => {
                 version: 1,
                 stateInput: enrichedState,
                 profileInput: profile,
-                mlInput,    
+                mlInput,
                 mlOutput
             },
             { upsert: true, new: true }

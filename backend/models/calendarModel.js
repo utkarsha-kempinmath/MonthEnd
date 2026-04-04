@@ -23,8 +23,20 @@ const calendarSchema = new mongoose.Schema({
 
     eventType: {
         type: String,
-        enum: ['exam', 'submission', 'fest', 'reminder', 'other'],
+        enum: ['academic', 'social', 'personal', 'financial', 'other'],
         default: 'other'
+    },
+
+    isRecurring: {
+        type: Boolean,
+        default: false
+    },
+
+
+    expectedImpact: {
+        type: String,
+        enum: ['low', 'medium', 'high'],
+        default: 'medium'
     }
 
 }, { timestamps: true })

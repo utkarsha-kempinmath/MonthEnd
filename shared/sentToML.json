@@ -2,25 +2,25 @@
   meta: {
     userId,
     month: "2026-04",
-    schemaVersion: 1
+    schemaVersion: 2
   },
 
   state: {
     financial: {
-      budgetUtilization,        // from reflection
+      budgetUtilization,
       planDeviationRatio,
       spendingDelta,
       transactionDelta
     },
 
     emotion: {
-      distribution,             // { happy: 0.3, stressed: 0.5, ... }
+      distribution,
       stressSpendRatio,
       emotionalVolatilityIndex
     },
 
     category: {
-      distribution             // categoryDistribution
+      distribution
     },
 
     temporal: {
@@ -29,7 +29,21 @@
     },
 
     event: {
-      highestExpenditureEventScore
+      highestExpenditureEventScore,
+
+      // NEW: event context (time-aware + behavioral)
+      eventContext: {
+        examCount,
+        festCount,
+        otherEventCount,
+
+        isEventActive,
+        daysToNextEvent,
+        daysSinceLastEvent,
+
+        totalEventDays,
+        eventIntensityScore
+      }
     }
   },
 
@@ -40,20 +54,21 @@
     socialInfluence
   },
 
-  goals: 
-    {
-      targetAmount,
-      savedAmount,
-      timelineMonths
-    }
-  ,
+  goals: {
+    totalTarget,
+    totalSaved,
+    avgTimeline,
+    goalCount,
+    pressureScore
+  },
 
   allowance: {
-    amount,
-    period
+    monthlyAllowance,
+    totalSpent,
+    remaining,
+    utilization
   }
 }
-
 
 {
   "meta": {
