@@ -62,6 +62,8 @@ exports.buildBehaviorProfile = (answers) => {
     traits.planning += 2
   }
 
+  
+
   const normalize = (v) => Math.min(v / 6, 1)
 
   return {

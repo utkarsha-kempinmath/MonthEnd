@@ -7,7 +7,7 @@ const {
   getProfile
 } = require("../controller/behaviorProfile")
 
-router.post("/", isLoggedIn, saveProfile)
+//router.post("/", isLoggedIn, saveProfile)
 router.get("/", isLoggedIn, getProfile)
 
 module.exports = router
