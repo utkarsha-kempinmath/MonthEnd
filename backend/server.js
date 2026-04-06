@@ -14,8 +14,7 @@ const expensesRoute = require('./routes/expensesRoute')
 const goalRoute = require('./routes/goalRoute')
 const behaviorProfileRoute = require('./routes/behaviorProfileRoute')
 const onboardingRoute = require("./routes/onboardingRoute")
-
-
+const chatbotRoute = require("./routes/chatbotRoute")
 
 dotenv.config({path: './config/config.env'});
 
@@ -33,6 +32,7 @@ app.use('/api/expenses', expensesRoute)
 app.use('/api/goals', goalRoute)
 app.use('/api/profile', behaviorProfileRoute)
 app.use("/api/onboarding", onboardingRoute)
+app.use("/api/chat", chatbotRoute)
 
 app.use(
   cors({
