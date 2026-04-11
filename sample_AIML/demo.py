@@ -32,7 +32,7 @@ def main():
     print("\n=== AI ENGINE DEMO ===\n")
 
     print("1. Loading sentToML v2 payload...")
-    sent_payload = load_json("data/demo_sent_to_ml.json")
+    sent_payload = load_json("../shared/sentToML.json")
 
     print("2. Running from_ml (sentToML v2 -> fromML)...")
     try:
@@ -47,8 +47,8 @@ def main():
         print("\n  Full fromML output:")
         print(json.dumps(from_ml, indent=2))
 
-        print("\n3. Writing fromML output to data/from_ml_output.json...")
-        save_json("data/from_ml_output.json", from_ml)
+        print("\n3. Writing fromML output to ../shared/fromML.json...")
+        save_json("../shared/fromML.json", from_ml)
         print("[OK] Saved")
 
     except Exception as e:
