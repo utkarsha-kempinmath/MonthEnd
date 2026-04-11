@@ -2,9 +2,6 @@
 core.py
 
 Pure analytics layer.
-- No database access
-- No Hugging Face / LLM usage
-- No environment variables
 - Deterministic, testable functions only
 
 Input: structured Python data (from backend)
