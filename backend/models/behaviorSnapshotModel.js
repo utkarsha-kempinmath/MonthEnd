@@ -23,65 +23,63 @@ const behaviorSnapshotSchema = new mongoose.Schema({
     },
 
     mlOutput: {
-        type: Object,
+    risk: {
+        level: { type: String },
+        overspendingProbability: { type: Number },
+        financialInstabilityScore: { type: Number }
+    },
 
-        risk: {
-            level,
-            overspendingProbability,
-            financialInstabilityScore
-        },
+    financialPosition: {
+        spent: Number,
+        budget: Number,
+        remaining: Number,
+        daysLeft: Number,
+        avgDailySpend: Number
+    },
 
-        financialPosition: {
-            spent,
-            budget,
-            remaining,
-            daysLeft,
-            avgDailySpend
-        },
+    affordability: {
+        canAfford: Boolean,
+        safeLimit: Number,
+        dangerLimit: Number
+    },
 
-        affordability: {
-            canAfford,
-            safeLimit,
-            dangerLimit
-        },
+    forecast: {
+        projectedSpend: Number,
+        remainingBuffer: Number,
+        confidence: Number
+    },
 
-        forecast: {
-            projectedSpend,
-            remainingBuffer,
-            confidence
-        },
+    goalStatus: {
+        progress: Number,
+        onTrack: Boolean
+    },
 
-        goalStatus: {
-            progress,
-            onTrack
-        },
+    impact: {
+        delayAmount: Number,
+        delayRisk: String,
+        budgetImpact: Number,
+        goalImpact: Number,
+        behaviorRisk: String
+    },
 
-        impact: {
-            delayAmount,
-            delayRisk,
-            budgetImpact,
-            goalImpact,
-            behaviorRisk
-        },
+    behavioral: {
+        dominantPattern: String,
+        trigger: String,
+        consistencyScore: Number
+    },
 
-        behavioral: {
-            dominantPattern,
-            trigger,
-            consistencyScore
-        },
+    predictions: {
+        endOfMonthBalance: Number,
+        goalAchievementProbability: Number
+    },
 
-        predictions: {
-            endOfMonthBalance,
-            goalAchievementProbability
-        },
+    anomalies: { type: Object },
 
-        anomalies,
-
-        insights: {
-            summary,
-            tags
-        }
+    insights: {
+        summary: String,
+        tags: [String]
     }
+}
 
 }, { timestamps: true });
 
