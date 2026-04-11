@@ -29,6 +29,7 @@ const safeDivide = (a, b) => {
  * 
  * No raw user data is exposed beyond aggregated signals.
  */
+
 exports.buildBehavioralStateInput = ({
     currentExpenses = [],
     previousExpenses = [],
@@ -46,7 +47,7 @@ exports.buildBehavioralStateInput = ({
     const totalSpent = currentExpenses.reduce((sum, e) => sum + e.amount, 0)
     const prevTotalSpent = previousExpenses.reduce((sum, e) => sum + e.amount, 0)
 
-    const totalBudget = currentPlan.total || 0
+    const totalBudget = currentPlan?.total || 0
 
     const transactionCount = currentExpenses.length
     const prevTransactionCount = previousExpenses.length

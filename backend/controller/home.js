@@ -16,6 +16,8 @@ const Calendar = require('../models/calendarModel')
 const BehaviorProfile = require('../models/behaviorProfileModel')
 const Goal = require("../models/goalModel")
 const Allowance = require("../models/allowanceModel")
+const insightService = require("../services/insightService");
+const { runAnalytics } = require("../services/mlBridge");
 
 exports.getMonthlyReflection = async (req, res) => {
     try {
@@ -34,7 +36,6 @@ exports.getMonthlyReflection = async (req, res) => {
         const prevStart = new Date(year, monthIndex - 1, 1)
         const prevEnd = new Date(year, monthIndex, 1)
 
-        // ✅ FIX: define before usage
         const monthString = monthQuery
             ? monthQuery
             : `${year}-${String(monthIndex + 1).padStart(2, '0')}`
@@ -102,7 +103,12 @@ exports.getMonthlyReflection = async (req, res) => {
             pressureScore
         }
 
-        const profile = profileDoc ? profileDoc.traits : null
+        const profile = profileDoc?.traits || {
+            impulsivity: 0,
+            planning: 0,
+            emotionalSpending: 0,
+            socialInfluence: 0
+        }
 
         const examCount = events.filter(e => e.eventType === 'academic').length
         const festCount = events.filter(e => e.eventType === 'social').length
@@ -194,20 +200,26 @@ exports.getMonthlyReflection = async (req, res) => {
             })
         }
 
+        const safePlan = plan || { categories: [] }
+
         const stateInput = buildBehavioralStateInput({
             currentExpenses: expenses,
             previousExpenses,
-            currentPlan: plan,
+            currentPlan: plan || {
+                categories: [],
+                total: 0
+            },
             year,
             monthIndex
         })
 
+        console.log("currentExpenses:", expenses.length)
+        console.log("previousExpenses:", previousExpenses.length)
+        console.log("plan exists:", !!plan)
+
         if (!stateInput) {
-            return res.json({
-                success: true,
-                dailyTrend,
-                reflections: ["No spending data for this month yet."]
-            })
+            console.log("⚠️ stateInput is NULL — bypassing for ML test");
+
         }
 
         const enrichedState = {
@@ -222,38 +234,29 @@ exports.getMonthlyReflection = async (req, res) => {
             profile
         }
 
-        const mlOutput = {
-            risk: {
-                overspendingProbability:
-                    mlInput.state.financial.budgetUtilization > 1 ? 0.8 : 0.3
+        const mlPayload = {
+            meta: {
+                userId: userId.toString(),
+                schemaVersion: 2          // ← move it here
             },
-            behavioral: {
-                dominantPattern:
-                    mlInput.state.emotion.stressSpendRatio > 0.5
-                        ? "emotional_spending"
-                        : "controlled",
-            },
-            anomalies: [
-                (mlInput.state.eventContext?.eventIntensityScore || 0) > 0.7
-                    ? { type: "event_spike", severity: 0.7 }
-                    : null
-            ].filter(Boolean),
-            insights: {
-                summary: "basic rule-based insight"
-            }
-        }
+            state: enrichedState,
+            allowance: formattedAllowance,
+            profile,
+            goals: aggregatedGoals
+        };
 
+        const mlOutput = await insightService.generateInsights(mlPayload);
+
+        console.log("mlOutput being saved:", JSON.stringify(mlOutput));
         await BehaviorSnapshot.findOneAndUpdate(
             { user: userId, month: monthString },
             {
                 version: 1,
                 stateInput: enrichedState,
-                profileInput: profile,
-                mlInput,
                 mlOutput
             },
             { upsert: true, new: true }
-        )
+        );
 
         res.json({
             success: true,

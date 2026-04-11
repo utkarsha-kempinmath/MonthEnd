@@ -117,7 +117,7 @@ def _build_from_ml_output(sent_payload: dict, analytics_output: dict) -> dict:
     """
     enriched = analytics_output.get("_enriched", {})
     state = enriched.get("state", sent_payload.get("state", {}))
-    profile = enriched.get("profile", sent_payload.get("profile", {}))
+    profile = enriched.get("profile", sent_payload.get("profile", {})) or {}
     goals = enriched.get("goals", sent_payload.get("goals", {}))
     
     allowance = analytics_output.get("allowance", {})
@@ -191,6 +191,11 @@ def _build_from_ml_output(sent_payload: dict, analytics_output: dict) -> dict:
     # Composite risk
     base_risk = base_overspending * plan_dev_factor * stress_factor * event_stress_mult
     base_risk = min(1.0, base_risk + volatility_influence)
+
+    # If low data, boost base risk using quiz-derived hint
+    profile_hint = analytics_output.get("_profile_risk_hint", 0)
+    if profile_hint and base_risk == 0:
+        base_risk = profile_hint
     
     # Determine risk level with new thresholds
     if base_risk > 0.85:
@@ -687,80 +692,34 @@ def run_from_ml(sent_payload: dict) -> dict:
     if "_enriched" in internal_payload:
         analytics["_enriched"] = internal_payload["_enriched"]
     
+    #solved the edge case, initially when there is not enough datam the ml will now analyse on basis of the quiz nd qu asked
     if analytics.get("status") != "ok":
-        # Return error response with full schema structure
-        return {
-            "risk": {
-                "level": "low",
-                "overspendingProbability": 0.0,
-                "financialInstabilityScore": 0.0,
-                "compositeRiskFactors": {}
-            },
-            "financialPosition": {
-                "spent": 0.0,
-                "budget": 0.0,
-                "remaining": 0.0,
-                "utilization": 0.0,
-                "daysLeft": 0,
-                "avgDailySpend": 0.0,
-                "budgetDeviation": 0.0
-            },
-            "affordability": {
-                "canAfford": False,
-                "safeLimit": 0.0,
-                "dangerLimit": 0.0,
-            },
-            "forecast": {
-                "projectedSpend": 0.0,
-                "remainingBuffer": 0.0,
-                "confidence": 0.0,
-                "confidenceFactors": {}
-            },
-            "goalStatus": {
-                "progress": 0.0,
-                "onTrack": False,
-                "totalTarget": 0.0,
-                "totalSaved": 0.0,
-                "goalCount": 0,
-                "pressureScore": 0.0
-            },
-            "impact": {
-                "delayAmount": 0.0,
-                "delayRisk": "low",
-                "budgetImpact": "safe",
-                "goalImpact": "none",
-                "behaviorRisk": "low",
-            },
-            "behavioral": {
-                "dominantPattern": "not_enough_data",
-                "trigger": "unknown",
-                "consistencyScore": 0.0,
-                "emotionalMetrics": {},
-                "temporalMetrics": {}
-            },
-            "predictions": {
-                "endOfMonthBalance": 0.0,
-                "goalAchievementProbability": 0.0,
-                "riskTrajectory": "stable"
-            },
+        profile = internal_payload.get("_enriched", {}).get("profile", {}) or {}
+        goals = internal_payload.get("_enriched", {}).get("goals", {}) or {}
+    
+        # Derive synthetic summary from quiz traits + goals
+        monthly = float(sent_payload.get("allowance", {}).get("monthlyAllowance", 0))
+        total_spent = float(sent_payload.get("allowance", {}).get("totalSpent", 0))
+    
+        # Use impulsivity to estimate risk even without transactions
+        impulsivity = float(profile.get("impulsivity", 0) or 0)
+        emotional = float(profile.get("emotionalSpending", 0) or 0)
+    
+        analytics = {
+            "status": "ok",
             "anomalies": [],
-            "insights": {
-                "summary": "Insufficient data to generate insights",
-                "tags": ["insufficient_records"],
-                "detailedFindings": []
+            "summary": {},
+            "allowance": {
+                "monthlyAllowance": monthly,
+                "totalSpent": total_spent,
+                "remaining": float(sent_payload.get("allowance", {}).get("remaining", 0))
             },
-            "chatbot": {
-                "message": "Please provide more data for analysis",
-                "followUp": {
-                    "required": True,
-                    "field": "transactions",
-                    "question": "Can you provide your transaction history?"
-                }
-            }
+            # Inject profile-derived signals so _build_from_ml_output has context
+            "_profile_risk_hint": min(1.0, (impulsivity * 0.6) + (emotional * 0.4)),
+            "_enriched": internal_payload.get("_enriched", {})
         }
 
     return _build_from_ml_output(sent_payload, analytics)
-
 
 # --------------------------------
 # ADVISORY ENTRY POINT

@@ -21,48 +21,48 @@ from typer import prompt
 # Load environment variables from project root
 env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(env_path)
-print(f"[DEBUG] Loading .env from: {env_path}")
+#print(f"[DEBUG] Loading .env from: {env_path}")
 
 def safe_generate(hf_client, prompt, **kwargs) -> str:
     """
     Safely consume HF text generation output, with detailed debug logging.
     Prevents StopIteration crashes.
     """
-    print("[DEBUG] HF prompt:\n", prompt[:100] + "...")
-    print("[DEBUG] HF kwargs:\n", kwargs)
+    #print("[DEBUG] HF prompt:\n", prompt[:100] + "...")
+    #print("[DEBUG] HF kwargs:\n", kwargs)
 
     try:
         print("[DEBUG] Calling HF text_generation...")
         result = hf_client.text_generation(prompt, **kwargs)
-        print("[DEBUG] HF call returned, type:", type(result))
-        print("[DEBUG] HF raw result:", repr(result)[:200])
+        #print("[DEBUG] HF call returned, type:", type(result))
+        #print("[DEBUG] HF raw result:", repr(result)[:200])
 
         # If streaming / generator
         if hasattr(result, "__iter__") and not isinstance(result, str):
-            print("[DEBUG] Result is iterable, attempting to consume...")
+            #print("[DEBUG] Result is iterable, attempting to consume...")
             chunks = list(result)
-            print("[DEBUG] HF chunked output count:", len(chunks))
+            #print("[DEBUG] HF chunked output count:", len(chunks))
             if not chunks:
-                print("[DEBUG] No chunks received")
+                #print("[DEBUG] No chunks received")
                 return "I'm unable to generate a response right now."
             out = "".join(chunks).strip()
-            print("[DEBUG] HF joined output:", repr(out)[:150])
+            #print("[DEBUG] HF joined output:", repr(out)[:150])
             return out if out else "I'm unable to generate a response right now."
 
         # Normal string response
         out = (result or "").strip()
-        print("[DEBUG] HF string output:", repr(out)[:150])
+        #print("[DEBUG] HF string output:", repr(out)[:150])
         if not out:
-            print("[DEBUG] Empty string response from HF")
+            #print("[DEBUG] Empty string response from HF")
             return "I'm unable to generate a response right now."
 
         return out
 
     except StopIteration:
-        print("[DEBUG] StopIteration exception")
+        #print("[DEBUG] StopIteration exception")
         return "I'm unable to generate a response right now."
     except Exception as e:
-        print("[DEBUG] HF exception caught:", type(e).__name__, "-", str(e)[:200])
+        #print("[DEBUG] HF exception caught:", type(e).__name__, "-", str(e)[:200])
         return f"Model error: {type(e).__name__}: {str(e)[:100]}"
 
 
@@ -76,7 +76,7 @@ def safe_generate_with_retries(hf_client, prompt, retries=3, backoff=2, **kwargs
 
         if attempt < retries:
             wait = backoff**attempt
-            print(f"[DEBUG] retry {attempt} failed, waiting {wait}s...")
+            #print(f"[DEBUG] retry {attempt} failed, waiting {wait}s...")
             import time
             time.sleep(wait)
 
@@ -99,8 +99,8 @@ def load_hf_client():
     model_name = os.getenv("HF_MODEL", "tiiuae/falcon-7b-instruct")
     
     token_preview = token[:20] + "..." if len(token) > 20 else token
-    print(f"[DEBUG] Using HF token: {token_preview}")
-    print(f"[DEBUG] Using HF model: {model_name}")
+    #print(f"[DEBUG] Using HF token: {token_preview}")
+    #print(f"[DEBUG] Using HF model: {model_name}")
 
     return InferenceClient(
         model=model_name,
@@ -270,7 +270,7 @@ def chat_respond(analytics_output, user_question):
     anomalies = analytics_output.get("anomalies", [])
     
     # DEBUG
-    print(f"[DEBUG] Chat data: remaining={remaining}, spent={total_spent}, monthly={monthly}, anomalies={len(anomalies)}")
+    #print(f"[DEBUG] Chat data: remaining={remaining}, spent={total_spent}, monthly={monthly}, anomalies={len(anomalies)}")
     
     # Question matching
     if any(word in question for word in ["afford", "buy", "purchase", "cost", "spare", "spend"]):

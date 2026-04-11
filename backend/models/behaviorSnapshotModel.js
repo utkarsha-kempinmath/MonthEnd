@@ -56,10 +56,10 @@ const behaviorSnapshotSchema = new mongoose.Schema({
 
     impact: {
         delayAmount: Number,
-        delayRisk: String,
-        budgetImpact: Number,
-        goalImpact: Number,
-        behaviorRisk: String
+        delayRisk: mongoose.Schema.Types.Mixed,
+        budgetImpact: mongoose.Schema.Types.Mixed,
+        goalImpact: mongoose.Schema.Types.Mixed,
+        behaviorRisk: mongoose.Schema.Types.Mixed
     },
 
     behavioral: {
