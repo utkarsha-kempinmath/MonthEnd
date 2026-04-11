@@ -5,7 +5,6 @@ const Planning = require('../models/planningModel')
 const BehaviorProfile = require('../models/behaviorProfileModel')
 const Goal = require("../models/goalModel")
 const Allowance = require("../models/allowanceModel")
-const { callMLService } = require("../services/mlService")
 
 exports.handleChatQuery = async (req, res) => {
   try {
@@ -37,6 +36,7 @@ exports.handleChatQuery = async (req, res) => {
       monthIndex
     })
 
+    // 🧠 EVENT CONTEXT (reuse logic)
     const examCount = events.filter(e => e.eventType === 'academic').length
     const festCount = events.filter(e => e.eventType === 'social').length
     const otherEventCount = events.filter(e => e.eventType === 'personal').length
@@ -67,6 +67,7 @@ exports.handleChatQuery = async (req, res) => {
       }
     }
 
+    // ⚡ BASIC RESPONSE ENGINE (v1)
     let response = {}
 
     if (queryType === "affordability") {
