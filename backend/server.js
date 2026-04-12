@@ -15,6 +15,8 @@ const goalRoute = require('./routes/goalRoute')
 const behaviorProfileRoute = require('./routes/behaviorProfileRoute')
 const onboardingRoute = require("./routes/onboardingRoute")
 const chatbotRoute = require("./routes/chatbotRoute")
+const shareRoute = require("./routes/shareRoutes")
+require("./cron/parentReportCron");
 
 dotenv.config({path: './config/config.env'});
 
@@ -33,6 +35,7 @@ app.use('/api/goals', goalRoute)
 app.use('/api/profile', behaviorProfileRoute)
 app.use("/api/onboarding", onboardingRoute)
 app.use("/api/chat", chatbotRoute)
+app.use("/api/share", shareRoute);
 
 app.use(
   cors({
