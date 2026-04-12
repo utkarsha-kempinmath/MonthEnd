@@ -166,11 +166,13 @@ exports.buildBehavioralStateInput = ({
      * 
      * Higher value → greater emotional shift in spending behavior.
      */
-    const emotionalVolatilityIndex = [...allEmotions].reduce((sum, emo) => {
+    const emotionalVolatilityIndex = Math.min(1, [...allEmotions].reduce((sum, emo) => {
         const currRatio = safeDivide(emotionTotals[emo] || 0, totalSpent)
         const prevRatio = safeDivide(prevEmotionTotals[emo] || 0, prevTotalSpent)
         return sum + Math.abs(currRatio - prevRatio)
-    }, 0)
+    }, 0))
+
+    console.log("emotionalVolatilityIndex:", emotionalVolatilityIndex)
 
 
     // TEMPORAL FEATURES
@@ -203,7 +205,7 @@ exports.buildBehavioralStateInput = ({
      * Measures irregularity in spending distribution.
      */
     const dailyVolatilityScore = dailyMean
-        ? dailyStd / dailyMean
+        ? Math.min(1, dailyStd / dailyMean)
         : 0
 
     /**
@@ -230,9 +232,8 @@ exports.buildBehavioralStateInput = ({
         : 0
 
     const highestExpenditureEventScore = dailyMean
-        ? highestDaySpend / dailyMean
+        ? Math.min(1, highestDaySpend / dailyMean)
         : 0
-
 
     // FINAL STRUCTURED STATE VECTOR
 

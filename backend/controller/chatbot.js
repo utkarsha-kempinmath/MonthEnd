@@ -25,7 +25,8 @@ exports.handleChatQuery = async (req, res) => {
 
     const botResponse = await runChatbot(
       snapshot.mlOutput,
-      question
+      question,
+      snapshot.planCategories
     );
 
     res.json({

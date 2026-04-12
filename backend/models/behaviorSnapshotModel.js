@@ -22,64 +22,71 @@ const behaviorSnapshotSchema = new mongoose.Schema({
         required: true
     },
 
+
+
+    planCategories: [{
+        name: String,
+        amount: Number
+    }],
+
+
     mlOutput: {
-    risk: {
-        level: { type: String },
-        overspendingProbability: { type: Number },
-        financialInstabilityScore: { type: Number }
-    },
+        risk: {
+            level: { type: String },
+            overspendingProbability: { type: Number },
+            financialInstabilityScore: { type: Number }
+        },
 
-    financialPosition: {
-        spent: Number,
-        budget: Number,
-        remaining: Number,
-        daysLeft: Number,
-        avgDailySpend: Number
-    },
+        financialPosition: {
+            spent: Number,
+            budget: Number,
+            remaining: Number,
+            daysLeft: Number,
+            avgDailySpend: Number
+        },
 
-    affordability: {
-        canAfford: Boolean,
-        safeLimit: Number,
-        dangerLimit: Number
-    },
+        affordability: {
+            canAfford: Boolean,
+            safeLimit: Number,
+            dangerLimit: Number
+        },
+        forecast: {
+            projectedSpend: Number,
+            remainingBuffer: Number,
+            confidence: Number
+        },
 
-    forecast: {
-        projectedSpend: Number,
-        remainingBuffer: Number,
-        confidence: Number
-    },
+        goalStatus: {
+            progress: Number,
+            onTrack: Boolean
+        },
 
-    goalStatus: {
-        progress: Number,
-        onTrack: Boolean
-    },
+        impact: {
+            delayAmount: Number,
+            delayRisk: mongoose.Schema.Types.Mixed,
+            budgetImpact: mongoose.Schema.Types.Mixed,
+            goalImpact: mongoose.Schema.Types.Mixed,
+            behaviorRisk: mongoose.Schema.Types.Mixed
+        },
 
-    impact: {
-        delayAmount: Number,
-        delayRisk: mongoose.Schema.Types.Mixed,
-        budgetImpact: mongoose.Schema.Types.Mixed,
-        goalImpact: mongoose.Schema.Types.Mixed,
-        behaviorRisk: mongoose.Schema.Types.Mixed
-    },
+        behavioral: {
+            dominantPattern: String,
+            trigger: String,
+            consistencyScore: Number
+        },
 
-    behavioral: {
-        dominantPattern: String,
-        trigger: String,
-        consistencyScore: Number
-    },
+        predictions: {
+            endOfMonthBalance: Number,
+            goalAchievementProbability: Number
+        },
 
-    predictions: {
-        endOfMonthBalance: Number,
-        goalAchievementProbability: Number
-    },
+        anomalies: { type: Object },
 
-    anomalies: { type: Object },
-
-    insights: {
-        summary: String,
-        tags: [String]
+        insights: {
+            summary: String,
+            tags: [String]
+        }
     }
-}
 
 }, { timestamps: true });
 

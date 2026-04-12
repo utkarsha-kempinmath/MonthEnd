@@ -738,12 +738,6 @@ def run_advisory(analytics_output: dict) -> dict:
 # --------------------------------
 # CHATBOT ENTRY POINT
 # --------------------------------
-def run_chatbot(analytics_output: dict, user_question: str) -> dict:
-    """
-    Answers a user question using analytics data.
-    Rule-based, no LLM dependency.
-    """
-    answer = chat_respond(analytics_output, user_question)
-    return {
-        "answer": answer
-    }
+def run_chatbot(analytics_output: dict, user_question: str, plan_categories: list = []) -> dict:
+    answer = chat_respond(analytics_output, user_question, plan_categories)
+    return {"answer": answer}

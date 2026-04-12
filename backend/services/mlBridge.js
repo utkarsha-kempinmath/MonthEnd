@@ -47,6 +47,11 @@ exports.runAnalytics = (payload) => {
     return runPython({ mode: "from_ml", payload });
 };
 
-exports.runChatbot = (analytics_output, question) => {
-    return runPython({ mode: "chatbot", analytics_output, question });
+exports.runChatbot = (analytics_output, question, planCategories = []) => {
+    return runPython({
+        mode: "chatbot",
+        analytics_output,
+        question,
+        plan_categories: planCategories
+    });
 };

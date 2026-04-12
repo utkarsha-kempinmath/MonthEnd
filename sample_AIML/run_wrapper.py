@@ -18,7 +18,8 @@ def main():
     elif mode == "chatbot":
         result = run_chatbot(
             data["analytics_output"],
-            data["question"]
+            data["question"],
+            data.get("plan_categories", []) 
         )
     
     elif mode == "from_ml":
@@ -29,6 +30,7 @@ def main():
         result = {"error": "Invalid mode"}
 
     print(json.dumps(result))
+    
 
 if __name__ == "__main__":
     main()

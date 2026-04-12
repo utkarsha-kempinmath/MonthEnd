@@ -253,10 +253,12 @@ exports.getMonthlyReflection = async (req, res) => {
             {
                 version: 1,
                 stateInput: enrichedState,
-                mlOutput
+                mlOutput,
+                planCategories: plan ? plan.categories : []
             },
             { upsert: true, new: true }
         );
+        console.log("plan categories being saved:", plan ? plan.categories : [])
 
         res.json({
             success: true,
