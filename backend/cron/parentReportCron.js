@@ -5,7 +5,6 @@ const { generateEmailHTML } = require("../utils/emailTemplate");
 const { sendParentEmail } = require("../services/mailService");
 
 cron.schedule("0 0 1 * *", async () => {
-  console.log("Running monthly parent report job...");
 
   const users = await ShareConfig.find({ isSharingEnabled: true });
 
