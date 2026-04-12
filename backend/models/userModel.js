@@ -4,6 +4,11 @@ const userSchema = mongoose.Schema({
     fullname: String,
     email: String,
     passwordHash: String,
+    authProvider: {
+        type: String,
+        enum: ["local", "google"],
+        default: "local"
+    },
     calander: {
         type: Array,
         default: []
