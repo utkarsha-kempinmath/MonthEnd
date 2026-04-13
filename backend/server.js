@@ -57,6 +57,8 @@ app.get("/api/test", (req, res) => {
   res.json({ message: "Backend is connected!" });
 });
  
-app.listen(process.env.PORT, () => {
+app.listen(process.env.PORT, "0.0.0.0", () => {
   console.log(`Backend running on ${process.env.PORT}`);
 });
+
+

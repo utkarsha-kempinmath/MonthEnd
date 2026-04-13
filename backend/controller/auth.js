@@ -3,50 +3,47 @@ const User = require('../models/userModel.js');
 const dotenv = require('dotenv')
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken')
-dotenv.config({path: './config/config.env'});
+dotenv.config({ path: './config/config.env' });
 
 const createdUser = async (req, res, next) => {
-  const { fullname, email, passwordHash } = req.body;
+  console.log("REQ BODY:", req.body);
 
-  if (!fullname || !email || !passwordHash) {
+  const { username, email, password } = req.body;
+
+  if (!username || !email || !password) {
     return next(new ErrorHandler("Please fill the required information!", 400));
   }
 
   try {
     const existingUser = await User.findOne({ email });
 
-
     if (existingUser) {
       return res.status(400).json({
         success: false,
         message: "User already registered, Try Login!!"
       });
-
     }
-
-    const hashedPassword = await bcrypt.hash(passwordHash, 10);
+    
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = await User.create({
-      fullname,
+      username,
       email,
-      passwordHash: hashedPassword
+      password: hashedPassword
     });
 
     const token = jwt.sign(
       { _id: newUser._id },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES }
-    )
+    );
 
-    res.cookie("token", token, {
-      httpOnly: true,
-    })
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
+      token,
       user: newUser
     });
 
-    res.redirect('/home')
   } catch (err) {
     next(err);
   }
@@ -54,16 +51,17 @@ const createdUser = async (req, res, next) => {
 
 const loginUser = async (req, res, next) => {
   try {
-    const { email, passwordHash } = req.body;
+    const { email, password } = req.body;
 
-    if (!email || !passwordHash) {
+    if (!email || !password) {
       return res.status(400).json({
         success: false,
         message: "Email and password required"
       });
     }
 
-    const user = await User.findOne({ email });
+    // Add .select("+password") here to retrieve the hashed password
+    const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
       return res.status(400).json({
@@ -72,7 +70,8 @@ const loginUser = async (req, res, next) => {
       });
     }
 
-    const isMatch = await bcrypt.compare(passwordHash, user.passwordHash);
+    // Now user.password will exist for the comparison
+    const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
       return res.status(400).json({
@@ -87,21 +86,15 @@ const loginUser = async (req, res, next) => {
       { expiresIn: process.env.JWT_EXPIRES || "7d" }
     );
 
-    res.cookie("token", token, {
-      httpOnly: true
-    });
-
-    res.status(200).json({
+    return res.json({
       success: true,
+      token,
       user
     });
-    
-    res.redirect('/home')
 
   } catch (err) {
     next(err);
   }
 };
 
-
-module.exports = { createdUser, loginUser};
+module.exports = { createdUser, loginUser };

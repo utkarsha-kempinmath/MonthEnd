@@ -1,9 +1,16 @@
 const mongoose = require('mongoose')
 
 const userSchema = mongoose.Schema({
-    fullname: String,
-    email: String,
-    passwordHash: String,
+    username: String, // Changed from fullname
+    email: {
+        type: String,
+        unique: true,
+        required: true
+    },
+    password: { // Changed from passwordHash
+        type: String,
+        select: false // This hides it from queries by default
+    },
     authProvider: {
         type: String,
         enum: ["local", "google"],
