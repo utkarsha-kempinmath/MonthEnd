@@ -31,7 +31,7 @@ app.use("/api/allowance", allowanceRoute);
 app.use('/api/calendar', calendarRoute)
 app.use('/api/planning', planningRoute)
 app.use('/api/expenses', expensesRoute)
-app.use('/api/goals', goalRoute)
+app.use('/api/goal', goalRoute)
 app.use('/api/profile', behaviorProfileRoute)
 app.use("/api/onboarding", onboardingRoute)
 app.use("/api/chat", chatbotRoute)

@@ -6,7 +6,6 @@ const jwt = require('jsonwebtoken')
 dotenv.config({ path: './config/config.env' });
 
 const createdUser = async (req, res, next) => {
-  console.log("REQ BODY:", req.body);
 
   const { username, email, password } = req.body;
 

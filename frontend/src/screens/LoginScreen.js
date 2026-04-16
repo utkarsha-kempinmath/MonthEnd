@@ -1,84 +1,14 @@
 import { useState, useEffect } from "react";
-import {
-    View,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    StyleSheet,
-} from "react-native";
-
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { login } from "../services/authService";
 import { saveToken } from "../services/tokenService";
 import { COLORS } from "../constants/theme";
 import { useGoogleAuth } from "../services/googleAuth";
 
 export default function LoginScreen({ navigation }) {
-    const styles = StyleSheet.create({
-        container: {
-            flex: 1,
-            backgroundColor: COLORS.background,
-            justifyContent: "center",
-            padding: 20,
-        },
-
-        title: {
-            fontSize: 28,
-            fontWeight: "bold",
-            color: COLORS.textDark,
-            marginBottom: 20,
-        },
-
-        subtitle: {
-            fontSize: 14,
-            color: COLORS.textLight,
-            marginBottom: 30,
-        },
-
-        input: {
-            backgroundColor: COLORS.input,
-            padding: 14,
-            borderRadius: 14,
-            marginBottom: 15,
-        },
-
-        button: {
-            backgroundColor: COLORS.primary,
-            padding: 15,
-            borderRadius: 14,
-            alignItems: "center",
-            marginTop: 10,
-        },
-
-        buttonText: {
-            color: COLORS.white,
-            fontWeight: "bold",
-            fontSize: 16,
-        },
-
-        googleButton: {
-            marginTop: 15,
-            padding: 14,
-            borderRadius: 14,
-            alignItems: "center",
-            backgroundColor: COLORS.white,
-            borderWidth: 1,
-            borderColor: "#ccc",
-        },
-
-        googleText: {
-            color: COLORS.textDark,
-            fontWeight: "600",
-        },
-
-        footer: {
-            marginTop: 20,
-            textAlign: "center",
-            color: COLORS.textLight,
-        },
-    });
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-
     const { response, promptAsync } = useGoogleAuth();
 
     useEffect(() => {
@@ -90,51 +20,41 @@ export default function LoginScreen({ navigation }) {
     const handleLogin = async () => {
         try {
             const res = await login({ email, password });
+            await AsyncStorage.removeItem('isNewUser');
             await saveToken(res.data.token);
-
-            alert("Welcome back");
         } catch (err) {
-        console.log("ERROR:", err.response?.data || err.message);
-        alert(err.response?.data?.message || "Signup failed");
-    }
+            console.log("ERROR:", err.response?.data || err.message);
+            alert(err.response?.data?.message || "Login failed");
+        }
     };
 
     return (
         <View style={styles.container}>
             <Text style={styles.title}>MonthEnd</Text>
-
-            <Text style={styles.subtitle}>
-                Understand your money. Not just track it.
-            </Text>
-
-            <TextInput
-                placeholder="Email"
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-            />
-
-            <TextInput
-                placeholder="Password"
-                secureTextEntry
-                style={styles.input}
-                value={password}
-                onChangeText={setPassword}
-            />
-
+            <Text style={styles.subtitle}>Understand your money. Not just track it.</Text>
+            <TextInput placeholder="Email" placeholderTextColor="#888" style={styles.input} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
+            <TextInput placeholder="Password" placeholderTextColor="#888" secureTextEntry style={styles.input} value={password} onChangeText={setPassword} />
             <TouchableOpacity style={styles.button} onPress={handleLogin}>
                 <Text style={styles.buttonText}>LOGIN</Text>
             </TouchableOpacity>
-
             <TouchableOpacity style={styles.googleButton} onPress={promptAsync}>
                 <Text style={styles.googleText}>Sign in with Google</Text>
             </TouchableOpacity>
-
             <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
-                <Text style={styles.footer}>
-                    Don’t have an account? Sign up
-                </Text>
+                <Text style={styles.footer}>Don't have an account? Sign up</Text>
             </TouchableOpacity>
         </View>
     );
 }
+
+const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: COLORS.background, justifyContent: "center", padding: 20 },
+    title: { fontSize: 28, fontWeight: "bold", color: COLORS.textPrimary, marginBottom: 8 },
+    subtitle: { fontSize: 14, color: COLORS.textSecondary, marginBottom: 30 },
+    input: { backgroundColor: COLORS.input, color: COLORS.textPrimary, padding: 14, borderRadius: 14, marginBottom: 15 },
+    button: { backgroundColor: COLORS.accentOrange, padding: 15, borderRadius: 14, alignItems: "center", marginTop: 10 },
+    buttonText: { color: COLORS.white, fontWeight: "bold", fontSize: 16, letterSpacing: 1 },
+    googleButton: { marginTop: 15, padding: 14, borderRadius: 14, alignItems: "center", backgroundColor: COLORS.white, borderWidth: 1, borderColor: "#ccc" },
+    googleText: { color: "#333", fontWeight: "600" },
+    footer: { marginTop: 20, textAlign: "center", color: COLORS.textSecondary },
+});

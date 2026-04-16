@@ -68,4 +68,18 @@ export const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
+  historyCard: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 15,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+    elevation: 2,
+  },
+  historyCategory: { fontWeight: "bold", fontSize: 16, color: "#333" },
+  historyDate: { fontSize: 12, color: "#666" },
+  historyAmount: { fontSize: 18, fontWeight: "bold", color: "#F26A21" },
+  historyEmotion: { fontSize: 12, color: "#B79ACD", fontStyle: "italic" },
 });

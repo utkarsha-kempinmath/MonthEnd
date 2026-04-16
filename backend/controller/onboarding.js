@@ -19,44 +19,22 @@ exports.completeOnboarding = async (req, res) => {
     )
 
     // 2. SAVE EVENTS
-    const events = []
-
-    const now = new Date()
-
-    for (let i = 0; i < eventAnswers.exams; i++) {
-      events.push({
+    if (eventAnswers && Array.isArray(eventAnswers)) {
+      const eventsToInsert = eventAnswers.map(event => ({
         user: userId,
-        eventName: "Exam",
-        startDate: now,
-        eventType: "academic",
-        expectedImpact: eventAnswers.intensity
-      })
-    }
+        eventName: event.eventName || "New Event",
+        startDate: event.startDate || new Date(),
+        endDate: event.endDate || null,
+        eventType: event.eventType || "personal",
+        // Dynamically capture the impact selected by the user, fallback to medium
+        expectedImpact: event.expectedImpact || "medium" 
+      }));
 
-    for (let i = 0; i < eventAnswers.fests; i++) {
-      events.push({
-        user: userId,
-        eventName: "Fest",
-        startDate: now,
-        eventType: "social",
-        expectedImpact: eventAnswers.intensity
-      })
+      if (eventsToInsert.length > 0) {
+        await Calendar.insertMany(eventsToInsert);
+      }
     }
-
-    for (let i = 0; i < eventAnswers.personal; i++) {
-      events.push({
-        user: userId,
-        eventName: "Personal Event",
-        startDate: now,
-        eventType: "personal",
-        expectedImpact: eventAnswers.intensity
-      })
-    }
-
-    if (events.length > 0) {
-      await Calendar.insertMany(events)
-    }
-
+    
     // 3. SAVE GOAL
     if (goalData) {
       await Goal.create({

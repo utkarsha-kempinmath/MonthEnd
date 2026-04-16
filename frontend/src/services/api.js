@@ -2,7 +2,7 @@ import axios from "axios";
 import { getToken } from "./tokenService";
 
 const API = axios.create({
-  baseURL: "http://192.168.1.8:3000/api", // CHANGE THIS
+  baseURL: "http://10.107.125.40:3000/api", 
   withCredentials: true,
 });
 

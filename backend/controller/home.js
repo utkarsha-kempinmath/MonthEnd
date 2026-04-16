@@ -212,11 +212,6 @@ exports.getMonthlyReflection = async (req, res) => {
             year,
             monthIndex
         })
-
-        console.log("currentExpenses:", expenses.length)
-        console.log("previousExpenses:", previousExpenses.length)
-        console.log("plan exists:", !!plan)
-
         if (!stateInput) {
             console.log("⚠️ stateInput is NULL — bypassing for ML test");
 
@@ -271,71 +266,81 @@ exports.getMonthlyReflection = async (req, res) => {
         res.status(500).json({ error: err.message })
     }
 }
+// controller/home.js
+
 exports.getMonthlyAnalysis = async (req, res) => {
     try {
+        const userId = req.user._id;
+        let { month } = req.query;
+        const now = new Date();
 
-        const userId = req.user._id
-
-        let { month } = req.query
-
-        const now = new Date()
-
+        // Default to current month if not provided
         if (!month) {
-            month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+            month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         }
 
-        const [year, monthIndex] = month.split('-').map(Number)
+        const [year, monthStr] = month.split('-').map(Number);
+        const monthIndex = monthStr - 1; // 0-indexed month
 
-        const start = new Date(year, monthIndex - 1, 1)
-        const end = new Date(year, monthIndex, 1)
+        const start = new Date(year, monthIndex, 1);
+        const end = new Date(year, monthIndex + 1, 1);
 
-        const plan = await Planning.findOne({
-            user: userId,
-            month
-        })
+        // Fetch data required for insights
+        const [plan, expenses, events] = await Promise.all([
+            Planning.findOne({ user: userId, month }),
+            Expense.find({ user: userId, date: { $gte: start, $lt: end } }),
+            Calendar.find({
+                user: userId,
+                $or: [
+                    { startDate: { $lte: end }, endDate: { $gte: start } },
+                    { startDate: { $lte: end }, endDate: null }
+                ]
+            })
+        ]);
 
-        const expenses = await Expense.find({
-            user: userId,
-            date: { $gte: start, $lt: end }
-        })
-
-        const actualMap = {}
-
+        const actualMap = {};
         expenses.forEach(e => {
-            actualMap[e.category] =
-                (actualMap[e.category] || 0) + e.amount
-        })
+            const catKey = e.category.toLowerCase().trim();
+            actualMap[catKey] = (actualMap[catKey] || 0) + e.amount;
+        });
 
-        const stats = []
-
+        const stats = [];
         if (plan) {
             plan.categories.forEach(cat => {
-
-                const actual = actualMap[cat.name] || 0
-
+                const actual = actualMap[cat.name.toLowerCase().trim()] || 0;
                 stats.push({
                     category: cat.name,
                     expected: cat.amount,
                     actual,
                     diff: actual - cat.amount
-                })
-            })
+                });
+            });
         }
 
-        const insights = generateInsights(stats, month)
+        // Build the event context for the generator
+        const eventContext = {
+            examCount: events.filter(e => e.eventType === 'academic').length,
+            isEventActive: events.some(e => {
+                const s = new Date(e.startDate);
+                const ed = e.endDate ? new Date(e.endDate) : s;
+                return now >= s && now <= ed;
+            })
+        };
+
+        // Pass expenses and eventContext to upgrade the insight logic
+        const insights = generateInsights(stats, month, expenses, eventContext); 
 
         res.json({
             success: true,
             month,
             stats,
             insights
-        })
+        });
 
     } catch (err) {
-        res.status(500).json({ error: err.message })
+        res.status(500).json({ error: err.message });
     }
-}
-
+};
 exports.getDashboard = async (req, res, next) => {
     try {
         const userId = req.user._id
