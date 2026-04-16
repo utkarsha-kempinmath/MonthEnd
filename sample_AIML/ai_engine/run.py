@@ -389,59 +389,61 @@ def _build_from_ml_output(sent_payload: dict, analytics_output: dict) -> dict:
         })
 
     # ========== INSIGHTS & TAGS ==========
-    insights_summary = "Based on your comprehensive financial profile:"
-    
+    # 1. Clean Summary without the boilerplate text
     if base_risk > 0.8:
-        insights_summary += " you are at high risk of budget overrun"
+        insights_summary = "You are at high risk of budget overrun"
     elif base_risk > 0.6:
-        insights_summary += " you are approaching budget limits"
+        insights_summary = "You are approaching budget limits"
     else:
-        insights_summary += " you are managing your budget well"
+        insights_summary = "You are managing your budget well"
 
     if stress_spend_ratio > 0.6:
-        insights_summary += " with stress-driven spending detected"
+        insights_summary += " with stress-driven spending detected."
     elif anomaly_list:
-        insights_summary += " with some spending spikes detected"
-
-    if goal_count > 1 and pressure_score > 0.7:
-        insights_summary += " while balancing multiple goals under pressure"
+        insights_summary += " with some spending spikes detected."
+    elif goal_count > 1 and pressure_score > 0.7:
+        insights_summary += " while balancing multiple goals under pressure."
+    else:
+        insights_summary += "."
 
     insights_tags = []
     
+    # 2. Human-readable tags (Max 6 words, no underscores)
+    
     # Financial tags
     if base_risk > 0.85:
-        insights_tags.append("critical_risk")
+        insights_tags.append("Critical risk of budget overrun")
     elif base_risk > 0.8:
-        insights_tags.append("high_risk")
+        insights_tags.append("High risk of overspending")
     if base_risk > 0.6:
-        insights_tags.append("caution")
+        insights_tags.append("Approaching safe budget limits")
     if plan_deviation_ratio > 0.25:
-        insights_tags.append("high_plan_deviation")
+        insights_tags.append("High deviation from planned budget")
     
     # Emotional tags
     if stress_spend_ratio > 0.6:
-        insights_tags.append("stress_driven_spending")
+        insights_tags.append("Stress-driven spending detected")
     if emotional_volatility > 0.7:
-        insights_tags.append("emotionally_volatile")
+        insights_tags.append("Emotionally volatile spending patterns")
     
     # Temporal tags
     if daily_volatility > 0.7:
-        insights_tags.append("volatile_daily_pattern")
+        insights_tags.append("Highly erratic daily spending")
     if spike_frequency > len(anomalies_out) * 1.5:
-        insights_tags.append("frequent_spikes")
+        insights_tags.append("Frequent abnormal spending spikes")
     
     # Event tags
     if event_intensity_score > 0.7 and is_event_active:
-        insights_tags.append("event_triggered_risk")
+        insights_tags.append("Events are amplifying spending risk")
     if days_to_next_event < 7:
-        insights_tags.append("approaching_event")
+        insights_tags.append("Upcoming events may trigger spending")
     
     # Goal tags
     if not goal_on_track:
-        insights_tags.append("goal_at_risk")
+        insights_tags.append("Current goals are at risk")
     if goal_count > 2 and pressure_score > 0.7:
-        insights_tags.append("multi_goal_pressure")
-
+        insights_tags.append("High pressure balancing multiple goals")
+        
     # ========== DETAILED FINDINGS ==========
     detailed_findings = []
     

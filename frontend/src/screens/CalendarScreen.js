@@ -89,7 +89,7 @@ export default function CalendarScreen({ navigation }) {
             Sync Your Calendar
           </Text>
           <Text style={styles.heroSub}>
-            Help UnFold understand your schedule to provide better insights on spending patterns.
+            Help MonthEnd understand your schedule to provide better insights on spending patterns.
           </Text>
         </View>
         <Ionicons name="calendar-outline" size={45} color={COLORS.mutedYellow} />

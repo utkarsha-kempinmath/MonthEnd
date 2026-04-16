@@ -218,31 +218,51 @@ exports.getMonthlyReflection = async (req, res) => {
         }
 
         const enrichedState = {
-            ...stateInput,
+            ...(stateInput || {}),
             eventContext
-        }
-
-        const mlInput = {
-            state: enrichedState,
-            goals: aggregatedGoals,
-            allowance: formattedAllowance,
-            profile
-        }
-
-        const mlPayload = {
-            meta: {
-                userId: userId.toString(),
-                schemaVersion: 2          // ← move it here
-            },
-            state: enrichedState,
-            allowance: formattedAllowance,
-            profile,
-            goals: aggregatedGoals
         };
 
-        const mlOutput = await insightService.generateInsights(mlPayload);
+        let mlOutput;
 
-        console.log("mlOutput being saved:", JSON.stringify(mlOutput));
+        // SAFEGUARD: If no data, bypass ML to prevent crashes and CastErrors
+        if (!stateInput || expenses.length === 0) {
+            console.log("⚠️ Not enough data. Bypassing ML and using safe fallback.");
+            mlOutput = {
+                insights: {
+                    summary: "You're just getting started! Log some expenses and create a plan to see your behavioral insights.",
+                    tags: ["Getting Started", "Need More Data"]
+                },
+                behavioral: { dominantPattern: "New User", consistencyScore: 100 },
+                risk: { level: "low", overspendingProbability: 0, financialInstabilityScore: 0 },
+                financialPosition: { spent: totalSpent, budget: 0, remaining: 0, daysLeft: 15, avgDailySpend: 0 },
+                affordability: { canAfford: true, safeLimit: 0, dangerLimit: 0 },
+                forecast: { projectedSpend: 0, remainingBuffer: 0, confidence: 0 },
+                goalStatus: { progress: 0, onTrack: true },
+                predictions: { endOfMonthBalance: 0, goalAchievementProbability: 0 }
+            };
+        } else {
+            // Normal ML Call
+            const mlPayload = {
+                meta: { userId: userId.toString(), schemaVersion: 2 },
+                state: enrichedState,
+                allowance: formattedAllowance,
+                profile,
+                goals: aggregatedGoals
+            };
+
+            try {
+                mlOutput = await insightService.generateInsights(mlPayload);
+            } catch (mlErr) {
+                console.log("ML Generation Failed, using fallback:", mlErr.message);
+                mlOutput = {
+                    insights: { summary: "Insight generation temporarily unavailable.", tags: ["System Busy"] },
+                    behavioral: { dominantPattern: "Unknown" },
+                    risk: { level: "medium", overspendingProbability: 0, financialInstabilityScore: 0 }
+                };
+            }
+        }
+
+        // Save safely to database
         await BehaviorSnapshot.findOneAndUpdate(
             { user: userId, month: monthString },
             {
@@ -253,18 +273,18 @@ exports.getMonthlyReflection = async (req, res) => {
             },
             { upsert: true, new: true }
         );
-        console.log("plan categories being saved:", plan ? plan.categories : [])
 
         res.json({
             success: true,
-            dailyTrend,
+            dailyTrend: dailyTrend.length > 0 ? dailyTrend : [0], // Prevent frontend chart crash
             stateInput: enrichedState,
             mlOutput
-        })
+        });
 
     } catch (err) {
-        res.status(500).json({ error: err.message })
+        res.status(500).json({ error: err.message });
     }
+
 }
 // controller/home.js
 

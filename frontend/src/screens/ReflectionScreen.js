@@ -19,42 +19,62 @@ const screenWidth = Dimensions.get("window").width;
 export default function ReflectionScreen({ navigation }) {
     const [loading, setLoading] = useState(true);
     const [trendData, setTrendData] = useState([]);
-    const [patterns, setPatterns] = useState([]);
+    const [insights, setInsights] = useState([]);
 
     useEffect(() => {
         fetchReflection();
     }, []);
+
+    // DYNAMIC FORMATTER: Solves the "one-word underscore" issue forever.
+    // If ML sends "emotionally_volatile", this turns it into "Emotionally volatile"
+    // If ML sends a normal sentence, it just capitalizes it and leaves it alone.
+    const formatPattern = (str) => {
+        if (!str) return "";
+        let cleaned = str.replace(/_/g, ' ').trim();
+        return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+    };
 
     const fetchReflection = async () => {
         try {
             const res = await getReflection();
             
             if (res.data.success) {
-                // Prepare Chart Data
                 const dailyData = res.data.dailyTrend || [];
-                // Fallback if array is completely empty to prevent chart crash
                 setTrendData(dailyData.length > 0 ? dailyData : [0]);
 
-                // Extract ML Insights
                 const mlOut = res.data.mlOutput;
-                let extractedPatterns = [];
+                let combinedList = [];
                 
                 if (mlOut) {
-                    if (mlOut.insights?.tags?.length > 0) {
-                        extractedPatterns = mlOut.insights.tags;
-                    } else if (mlOut.behavioral?.dominantPattern) {
-                        extractedPatterns = [
-                            mlOut.behavioral.dominantPattern,
-                            mlOut.insights?.summary || "Stable spending phase"
-                        ];
-                    } else {
-                        extractedPatterns = ["Maintaining stable routine", "No severe anomalies"];
+                    // 1. Extract Summary & Strip out repetitive AI boilerplate
+                    if (mlOut.insights?.summary) {
+                        let cleanSummary = mlOut.insights.summary
+                            .replace(/Based on your (comprehensive )?financial profile:?\s*/i, "")
+                            .replace(/Here is your insight:?\s*/i, "");
+                        
+                        cleanSummary = cleanSummary.charAt(0).toUpperCase() + cleanSummary.slice(1);
+                        combinedList.push(cleanSummary);
                     }
-                } else {
-                    extractedPatterns = ["Analyzing your recent behavior..."];
+                    
+                    // 2. Extract Tags and run them through the dynamic formatter
+                    if (mlOut.insights?.tags?.length > 0) {
+                        mlOut.insights.tags.forEach(tag => {
+                            combinedList.push(formatPattern(tag));
+                        });
+                    } else if (mlOut.behavioral?.dominantPattern) {
+                        combinedList.push(formatPattern(mlOut.behavioral.dominantPattern));
+                    }
+                }
+
+                // Fallback
+                if (combinedList.length === 0) {
+                    combinedList = [
+                        "Maintaining stable routine", 
+                        "No severe anomalies detected in your spending"
+                    ];
                 }
                 
-                setPatterns(extractedPatterns);
+                setInsights(combinedList);
             }
         } catch (err) {
             console.log("Reflection Fetch Error:", err);
@@ -67,23 +87,21 @@ export default function ReflectionScreen({ navigation }) {
     if (loading) {
         return (
             <View style={[styles.container, { justifyContent: 'center' }]}>
-                <ActivityIndicator size="large" color={COLORS.softTeal || COLORS.accentOrange} />
+                <ActivityIndicator size="large" color="#8ABEB7" />
             </View>
         );
     }
 
-    // Generate labels for the X-axis (e.g., every 4th day)
     const chartLabels = trendData.map((_, i) => (i % 4 === 0 || i === 0 ? String(i + 1) : ""));
 
     return (
         <View style={styles.container}>
-            {/* Custom Banner Header */}
-            <View style={styles.bannerHeader}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color={COLORS.white} />
+            <View style={styles.navHeader}>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <Ionicons name="arrow-back" size={28} color={COLORS.textPrimary} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Month Track</Text>
-                <View style={{ width: 24 }} />
+                <View style={{ width: 28 }} />
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
@@ -99,38 +117,43 @@ export default function ReflectionScreen({ navigation }) {
                         height={220}
                         withVerticalLines={false}
                         withHorizontalLines={true}
+                        yAxisLabel="₹"
+                        formatYLabel={(value) => {
+                            const num = Number(value);
+                            if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
+                            return num.toFixed(0);
+                        }}
                         chartConfig={{
-                            backgroundColor: COLORS.background,
-                            backgroundGradientFrom: COLORS.background,
-                            backgroundGradientTo: COLORS.background,
+                            backgroundColor: COLORS.card,
+                            backgroundGradientFrom: COLORS.card,
+                            backgroundGradientTo: COLORS.card,
                             decimalPlaces: 0,
-                            color: (opacity = 1) => COLORS.accentOrange, // Red/Orange line
-                            labelColor: (opacity = 1) => '#888',
+                            color: (opacity = 1) => '#8ABEB7',
+                            labelColor: (opacity = 1) => COLORS.textSecondary,
                             style: { borderRadius: 16 },
-                            propsForDots: { r: "3", strokeWidth: "2", stroke: COLORS.accentOrange },
-                            propsForBackgroundLines: { strokeDasharray: "", stroke: "rgba(0,0,0,0.05)" }
+                            propsForDots: { r: "3", strokeWidth: "2", stroke: '#8ABEB7' },
+                            propsForBackgroundLines: { strokeDasharray: "", stroke: "rgba(255,255,255,0.05)" },
+                            propsForLabels: { fontSize: 11 }
                         }}
                         bezier
                         style={styles.chart}
                     />
                 </View>
 
+                {/* Unified Key Patterns List */}
                 <View style={styles.patternsSection}>
                     <Text style={styles.sectionTitle}>Key Patterns</Text>
                     
-                    {patterns.map((item, index) => (
-                        <View key={index} style={styles.patternPill}>
-                            <Text style={styles.patternText}>{item}</Text>
+                    {insights.map((item, index) => (
+                        <View key={index} style={styles.insightCard}>
+                            <View style={styles.bulletPoint} />
+                            <Text style={styles.insightText}>{item}</Text>
                         </View>
                     ))}
                 </View>
 
                 <View style={styles.footerSection}>
-                    <Text style={styles.quoteText}>Patterns don't judge. They inform</Text>
-                    
-                    <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate("Home")}>
-                        <Text style={styles.actionButtonText}>Start Over</Text>
-                    </TouchableOpacity>
+                    <Text style={styles.quoteText}>Patterns don't judge. They inform.</Text>
                 </View>
 
             </ScrollView>
@@ -141,26 +164,20 @@ export default function ReflectionScreen({ navigation }) {
 const styles = StyleSheet.create({
     container: { 
         flex: 1, 
-        backgroundColor: '#FDECE4' // Light peach to match screenshot
+        backgroundColor: COLORS.background 
     },
-    bannerHeader: {
-        backgroundColor: '#8ABEB7', // Soft Teal from the screenshot
-        paddingTop: 60,
-        paddingBottom: 20,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        borderBottomLeftRadius: 15,
-        borderBottomRightRadius: 15,
-    },
-    backButton: {
-        padding: 5,
+    navHeader: { 
+        flexDirection: 'row', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        paddingTop: 60, 
+        marginBottom: 10,
+        paddingHorizontal: 20
     },
     headerTitle: {
-        fontSize: 24,
+        fontSize: 20,
         fontWeight: 'bold',
-        color: '#FFFFFF',
+        color: COLORS.textPrimary,
     },
     scrollContent: {
         padding: 20,
@@ -169,59 +186,58 @@ const styles = StyleSheet.create({
     chartWrapper: {
         marginTop: 10,
         marginBottom: 30,
-        alignItems: 'center',
     },
     chartTitle: {
-        alignSelf: 'flex-start',
-        fontSize: 12,
-        color: '#666',
-        marginBottom: 10,
+        fontSize: 14,
+        color: COLORS.textSecondary,
+        marginBottom: 15,
         fontWeight: '600'
     },
     chart: {
         borderRadius: 16,
-        paddingRight: 20, // prevents rightmost label from cutting off
     },
     patternsSection: {
         marginBottom: 40,
     },
     sectionTitle: {
-        fontSize: 22,
+        fontSize: 20,
         fontWeight: 'bold',
-        color: '#333',
+        color: COLORS.textPrimary,
         marginBottom: 15,
     },
-    patternPill: {
-        backgroundColor: '#8ABEB7', // Soft Teal
-        paddingVertical: 14,
-        paddingHorizontal: 15,
-        borderRadius: 10,
-        marginBottom: 10,
+    insightCard: {
+        backgroundColor: COLORS.card,
+        padding: 16,
+        borderRadius: 12,
+        marginBottom: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: COLORS.input,
     },
-    patternText: {
-        color: '#FFFFFF',
-        fontSize: 15,
-        fontWeight: 'bold',
+    bulletPoint: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: '#8ABEB7',
+        marginRight: 12,
+        marginTop: 6, 
+        alignSelf: 'flex-start'
+    },
+    insightText: {
+        color: COLORS.textPrimary,
+        fontSize: 14,
+        lineHeight: 22,
+        flex: 1,
     },
     footerSection: {
         alignItems: 'center',
-        marginTop: 20,
+        marginTop: 10,
     },
     quoteText: {
-        color: '#B03A2E', // Deep Red/Orange
-        fontSize: 16,
+        color: '#8ABEB7', 
+        fontSize: 14,
         fontWeight: 'bold',
-        marginBottom: 25,
-    },
-    actionButton: {
-        backgroundColor: '#8ABEB7',
-        paddingVertical: 15,
-        paddingHorizontal: 40,
-        borderRadius: 12,
-    },
-    actionButtonText: {
-        color: '#FFFFFF',
-        fontSize: 18,
-        fontWeight: 'bold',
+        fontStyle: 'italic'
     }
 });
