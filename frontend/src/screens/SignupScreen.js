@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { signup } from "../services/authService";
+import { signup, googleLogin } from "../services/authService"; // <-- Imported googleLogin
 import { saveToken } from "../services/tokenService";
 import { COLORS } from "../constants/theme";
 import { useGoogleAuth } from "../services/googleAuth";
@@ -10,13 +10,41 @@ export default function SignupScreen({ navigation }) {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const { response, promptAsync } = useGoogleAuth();
+    const [loading, setLoading] = useState(false);
+    const { request, response, promptAsync } = useGoogleAuth();
 
+    // Listen for Google Auth Response
     useEffect(() => {
-        if (response?.type === "success") console.log("Google signup success");
+        if (response?.type === "success") {
+            // Expo hides the token in the authentication object!
+            const idToken = response.authentication?.idToken || response.params?.id_token;
+            
+            if (idToken) {
+                handleGoogleSignUp(idToken);
+            } else {
+                console.log("Uh oh, Google response missing token:", response);
+                alert("Failed to grab token from Google.");
+            }
+        }
     }, [response]);
 
+    const handleGoogleSignUp = async (idToken) => {
+        setLoading(true);
+        try {
+            // We use the exact same backend route for Google Login/Signup!
+            const res = await googleLogin({ token: idToken }); 
+            await AsyncStorage.setItem('isNewUser', 'true'); // They might be new, route to Onboarding
+            await saveToken(res.data.token);
+        } catch (err) {
+            console.log("Google API ERROR:", err.response?.data || err.message);
+            alert("Google Sign-Up failed. Please try again.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleSignup = async () => {
+        setLoading(true);
         try {
             const res = await signup({ username: name, email, password });
             await AsyncStorage.setItem('isNewUser', 'true');
@@ -24,21 +52,31 @@ export default function SignupScreen({ navigation }) {
         } catch (err) {
             console.log("ERROR:", err.response?.data || err.message);
             alert(err.response?.data?.message || "Signup failed");
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Create Account</Text>
+            
             <TextInput placeholder="Name" placeholderTextColor="#888" style={styles.input} value={name} onChangeText={setName} />
             <TextInput placeholder="Email" placeholderTextColor="#888" style={styles.input} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
             <TextInput placeholder="Password" placeholderTextColor="#888" secureTextEntry style={styles.input} value={password} onChangeText={setPassword} />
-            <TouchableOpacity style={styles.button} onPress={handleSignup}>
-                <Text style={styles.buttonText}>SIGN UP</Text>
+            
+            <TouchableOpacity style={styles.button} onPress={handleSignup} disabled={loading}>
+                {loading ? <ActivityIndicator color={COLORS.white} /> : <Text style={styles.buttonText}>SIGN UP</Text>}
             </TouchableOpacity>
-            <TouchableOpacity style={styles.googleButton} onPress={promptAsync}>
+
+            <TouchableOpacity 
+                style={styles.googleButton} 
+                onPress={() => promptAsync()}
+                disabled={!request || loading}
+            >
                 <Text style={styles.googleText}>Sign up with Google</Text>
             </TouchableOpacity>
+
             <TouchableOpacity onPress={() => navigation.navigate("Login")}>
                 <Text style={styles.footer}>Already a user? Login</Text>
             </TouchableOpacity>

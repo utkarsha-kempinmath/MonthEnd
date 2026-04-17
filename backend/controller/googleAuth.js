@@ -16,9 +16,21 @@ const googleLogin = async (req, res) => {
     }
 
     const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
+            idToken: req.body.token, // (Or whatever variable holds your token here)
+            audience: [
+                // 1. Whatever is currently in your .env file
+                process.env.GOOGLE_CLIENT_ID, 
+                
+                // 2. Your Web ID (with the number 1)
+                "298605633-u5khvgj5c2mkp1617u5hkktuqobnm4uq.apps.googleusercontent.com",
+                
+                // 3. Your Web ID (with the letter L, just in case)
+                "298605633-u5khvgj5c2mkp16l7u5hkktuqobnm4uq.apps.googleusercontent.com",
+                
+                // 4. Your Android ID
+                "298605633-b5a79mmqb26jgsnvmigko1ouvkr4re9u.apps.googleusercontent.com"
+            ],
+        });
 
     const payload = ticket.getPayload();
 
@@ -55,7 +67,7 @@ const googleLogin = async (req, res) => {
     });
 
   } catch (err) {
-    console.log("Google Auth Error:", err);
+    console.log("=== RAW GOOGLE ERROR ===", err)
 
     return res.status(401).json({
       success: false,
