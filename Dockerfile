@@ -16,4 +16,4 @@ RUN cd sample_AIML && pip install --no-cache-dir pandas -r requirements.txt
 EXPOSE 10000
 
 # Start the server
-CMD ["node", "/backend/server.js"]
+CMD ["node", "./backend/server.js"]
