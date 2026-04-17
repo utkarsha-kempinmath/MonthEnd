@@ -10,6 +10,7 @@ import OnboardingScreen from '../screens/OnboardingScreen';
 import GoalListScreen from '../screens/GoalListScreen';
 import GoalDetailScreen from '../screens/GoalDetailScreen';
 import ReflectionScreen from '../screens/ReflectionScreen';
+import ChatbotScreen from '../screens/ChatbotScreen';
 
 const Stack = createStackNavigator();
 
@@ -29,6 +30,7 @@ export default function MainNavigator({ isNewUser }) {
       <Stack.Screen name="Goal" component={GoalListScreen} />
       <Stack.Screen name="GoalDetail" component={GoalDetailScreen} />
       <Stack.Screen name="MonthTrack" component={ReflectionScreen} />
+      <Stack.Screen name="Chat" component={ChatbotScreen} />
     </Stack.Navigator>
   );
 }

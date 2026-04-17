@@ -243,91 +243,116 @@ def generate_advice(analytics_output):
     
     return " ".join(advice_lines)
 
-
+#made some changes here cz cit wasnt analysing upcoming events
 def chat_respond(analytics_output, user_question, plan_categories=[]):
 
     question = user_question.lower()
+    import re
     
     # Build plan lookup
     plan_map = {p["name"]: p["amount"] for p in plan_categories} if plan_categories else {}
     plan_total = sum(plan_map.values())
 
-    # Handle both schemas
     if "financialPosition" in analytics_output:
         financial = analytics_output.get("financialPosition", {})
         remaining = financial.get("remaining", 0)
         total_spent = financial.get("spent", 0)
         monthly = financial.get("budget", 0)
+        avg_daily = financial.get("avgDailySpend", 0)
+        days_left = financial.get("daysLeft", 15)
     else:
         allowance = analytics_output.get("allowance", {})
         remaining = allowance.get("remaining", 0)
         total_spent = allowance.get("totalSpent", 0)
         monthly = allowance.get("monthlyAllowance", 0)
+        avg_daily = total_spent / 15
+        days_left = 15
 
     summary = analytics_output.get("summary", {})
     anomalies = analytics_output.get("anomalies", [])
 
-    if any(word in question for word in ["affect", "impact", "goal", "goals", "delay"]):
-        import re
-        amounts = re.findall(r'\d+', user_question)
-        purchase = float(amounts[0]) if amounts else 0
+    live_events = analytics_output.get("liveEvents", {})
+    active_evt = live_events.get("active", 0)
+    upcoming_evt = live_events.get("upcoming", 0)
     
+    event_warning = ""
+    if active_evt > 0 or upcoming_evt > 0:
+        total_evt = active_evt + upcoming_evt
+        event_warning = f" Heads up: You have {total_evt} active/upcoming event(s) in your calendar!"
+
+    amounts = re.findall(r'\d+', user_question)
+    purchase = float(amounts[-1]) if amounts else 0
+
+    # --- NEW: Catch if the user just types a number (e.g. "1500" or "1500 rs") ---
+    text_only = re.sub(r'[\d\s\.,₹$]', '', question).replace('rs', '').replace('rupees', '').replace('inr', '').strip()
+    is_just_number = (purchase > 0) and (len(text_only) == 0)
+
+    # 1. Goal Impact (Highest Priority)
+    if any(word in question for word in ["affect", "impact", "goal", "goals", "delay"]):
         goal_status = analytics_output.get("goalStatus", {})
         total_target = goal_status.get("totalTarget", 0)
         total_saved = goal_status.get("totalSaved", 0)
         goal_count = goal_status.get("goalCount", 0)
         pressure = goal_status.get("pressureScore", 0)
         on_track = goal_status.get("onTrack", True)
-    
+
         new_remaining = remaining - purchase
-        new_savings_potential = new_remaining
-    
+
         if purchase > 0:
             goal_delay = round((purchase / max(total_target - total_saved, 1)) * 12, 1) if total_target > total_saved else 0
             if new_remaining < 0:
                 return (
-                    f"You can't afford ₹{purchase:.0f} — it exceeds your remaining balance of ₹{remaining:.0f}. "
-                    f"This would directly delay your {goal_count} goal(s) since you'd overspend this month."
+                    f"You can't afford ₹{purchase:.0f} — it exceeds your remaining balance. "
+                    f"This would directly delay your {goal_count} goal(s)."
                 )
             elif pressure > 0.7:
                 return (
                     f"Spending ₹{purchase:.0f} will leave you with ₹{new_remaining:.0f}. "
-                    f"Your goals are already under high pressure (score: {int(pressure*100)}%). "
-                    f"This purchase could delay your goals by ~{goal_delay} month(s). "
-                    f"Consider skipping or deferring it."
+                    f"Your goals are under high pressure. This could delay them by ~{goal_delay} month(s). "
+                    f"Consider skipping this."
                 )
             else:
                 return (
-                    f"Spending ₹{purchase:.0f} will leave ₹{new_remaining:.0f} remaining. "
-                    f"Goal impact: ~{goal_delay} month(s) delay on your {goal_count} active goal(s). "
-                    f"{'You are currently on track — this purchase is manageable.' if on_track else 'You are already off track — this adds more pressure.'} "
-                    f"Total saved so far: ₹{total_saved:.0f} of ₹{total_target:.0f} target."
+                    f"Spending ₹{purchase:.0f} leaves ₹{new_remaining:.0f}. "
+                    f"Goal impact: ~{goal_delay} month(s) delay. "
+                    f"{'Manageable, but be careful.' if on_track else 'You are already off track — this adds pressure.'} "
                 )
-            
-    else:
-        return (
-            f"You have {goal_count} active goal(s). "
-            f"Total target: ₹{total_target:.0f}, saved: ₹{total_saved:.0f}. "
-            f"Pressure score: {int(pressure*100)}%. "
-            f"{'On track!' if on_track else 'Currently off track — reduce discretionary spending.'}"
-        )
-
-    if any(word in question for word in ["afford", "buy", "purchase", "cost", "spare", "spend"]):
-        import re
-        amounts = re.findall(r'\d+', user_question)
-        if amounts:
-            asked_amount = float(amounts[-1])
-            if asked_amount <= remaining:
-                return f"Yes, you can afford it. You have ₹{remaining:.0f} remaining. But be careful not to overspend."
-            else:
-                shortfall = asked_amount - remaining
-                return f"No. You need ₹{shortfall:.0f} more. Current balance: ₹{remaining:.0f}."
         else:
-            return f"You have ₹{remaining:.0f} remaining. Check if it's within that."
+            return (
+                f"You have {goal_count} active goal(s). "
+                f"Target: ₹{total_target:.0f}, Saved: ₹{total_saved:.0f}. "
+                f"{'On track!' if on_track else 'Currently off track — reduce discretionary spending.'}"
+            )
 
-    elif any(word in question for word in ["spent", "spending", "balance", "money", "left"]):
+    # 2. END OF MONTH OUTLOOK 
+    elif any(word in question for word in ["end of month", "forecast", "outlook", "end of the month", "project"]):
+        projected_remaining = remaining - (avg_daily * days_left)
+        
+        if purchase > 0:
+            projected_remaining -= purchase
+            if projected_remaining < 0:
+                return f"If you spend ₹{purchase:.0f}, you'll likely end the month in the negative (₹{projected_remaining:.0f}).{event_warning}"
+            else:
+                return f"If you spend ₹{purchase:.0f}, your projected end-of-month balance will be ~₹{projected_remaining:.0f}.{event_warning}"
+        else:
+            return f"Based on your daily average of ₹{avg_daily:.0f}, your projected end-of-month balance is ~₹{projected_remaining:.0f}.{event_warning}"
+
+    # 3. BALANCE & SPENT (Moved ABOVE Affordability so "spending balance" triggers correctly)
+    elif any(word in question for word in ["spent", "balance", "money left", "remaining"]):
         return f"Spent: ₹{total_spent:.0f}. Remaining: ₹{remaining:.0f}. Monthly allowance: ₹{monthly:.0f}."
 
+    # 4. Affordability OR Just a Number (Catches "1500" perfectly now)
+    elif is_just_number or any(word in question for word in ["afford", "buy", "purchase", "cost", "spare", "spend"]):
+        if purchase > 0:
+            if purchase <= remaining:
+                return f"Yes, you can afford it. You have ₹{remaining:.0f} remaining.{event_warning} But be careful not to overspend."
+            else:
+                shortfall = purchase - remaining
+                return f"No. You need ₹{shortfall:.0f} more. Current balance: ₹{remaining:.0f}."
+        else:
+            return f"Sure! You currently have ₹{remaining:.0f} remaining this month. Tell me the amount you're thinking of spending and I'll check if it's safe!"
+
+    # 5. Anomalies
     elif any(word in question for word in ["anomal", "unusual", "spike", "high", "expensive"]):
         if anomalies:
             top = anomalies[0]
@@ -335,6 +360,7 @@ def chat_respond(analytics_output, user_question, plan_categories=[]):
         else:
             return "No unusual spending patterns detected. You're spending normally."
 
+    # 6. Categories
     elif any(word in question for word in ["category", "categories", "expense"]):
         if plan_map:
             items = ", ".join([f"{k}: budgeted ₹{v:.0f}, spent ₹{summary.get(k, 0):.0f}" 
@@ -345,103 +371,20 @@ def chat_respond(analytics_output, user_question, plan_categories=[]):
             return f"Top expenses: {items}"
         return "No spending data available."
 
-    elif any(word in question for word in ["save", "tip", "advice", "help", "need to do", "should i"]):
-        import re
-        amounts = re.findall(r'\d+', user_question)
-        
-        if amounts and plan_map:
-            # User mentioned a target amount — give plan-aware savings advice
-            target = float(amounts[0])
-            months = float(amounts[1]) if len(amounts) >= 2 else 1
-            monthly_save = target / months
-            
-            # Find categories with budget remaining
-            cuttable = []
-            for cat, budgeted in plan_map.items():
-                spent_in_cat = summary.get(cat, 0)
-                cat_remaining = budgeted - spent_in_cat
-                if cat_remaining > 0:
-                    # Suggest cutting 20% of remaining budget in each category
-                    suggested_cut = round(cat_remaining * 0.2)
-                    weekly_cut = round(suggested_cut / 4)
-                    cuttable.append({
-                        "cat": cat,
-                        "remaining": cat_remaining,
-                        "cut": suggested_cut,
-                        "weekly": weekly_cut
-                    })
+    # 7. Savings Tips
+    elif any(word in question for word in ["save", "tip", "advice", "help"]):
+        return f"Your balance is ₹{remaining:.0f}. Add a budget plan for category-specific savings advice."
 
-            # Sort by most cuttable first
-            cuttable.sort(key=lambda x: x["cut"], reverse=True)
-
-            cut_detail = ", ".join([
-                f"{c['cat']} (cut ₹{c['cut']}/month = ₹{c['weekly']}/week)"
-                for c in cuttable[:3]
-            ])
-
-            total_cuttable = sum(c["cut"] for c in cuttable)
-
-            if remaining >= monthly_save:
-                return (
-                    f"To save ₹{target:.0f} in {int(months)} month(s), set aside ₹{monthly_save:.0f}/month. "
-                    f"You have ₹{remaining:.0f} remaining — achievable! "
-                    f"Suggested cuts: {cut_detail if cut_detail else 'review discretionary spending'}. "
-                    f"Total cuttable: ₹{total_cuttable}/month. "
-                    f"Tip: Automate savings at month start before spending."
-                )
-            else:
-                shortfall = monthly_save - remaining
-                return (
-                    f"Saving ₹{monthly_save:.0f}/month is tight — you're ₹{shortfall:.0f} short. "
-                    f"Suggested cuts: {cut_detail if cut_detail else 'non-essentials'}. "
-                    f"If you cut ₹{total_cuttable}/month total, "
-                    f"you'd need {int(target / max(total_cuttable, 1))} month(s) to reach your goal. "
-                    f"Consider extending your timeline."
-                )
-            
-        elif amounts:
-            # Has target but no plan
-            target = float(amounts[0])
-            months = float(amounts[1]) if len(amounts) >= 2 else 1
-            monthly_save = target / months
-            if remaining >= monthly_save:
-                return (
-                    f"To save ₹{target:.0f} in {int(months)} month(s), set aside ₹{monthly_save:.0f}/month. "
-                    f"You have ₹{remaining:.0f} remaining — that's doable! "
-                    f"Pro tip: Add a monthly budget plan so I can give you category-specific savings advice."
-                )
-            else:
-                return (
-                    f"Saving ₹{monthly_save:.0f}/month is tough — you only have ₹{remaining:.0f} left. "
-                    f"Consider extending to {int(target / max(remaining, 1))} months, or reduce your target. "
-                    f"Add a budget plan so I can identify exactly where to cut."
-                )
-        
-        elif plan_map:
-            # No target, but has plan — show what's left per category
-            tips = [f"{k}: ₹{v - summary.get(k, 0):.0f} remaining" 
-                   for k, v in plan_map.items() if v - summary.get(k, 0) > 0]
-            return f"Budget remaining by category: {', '.join(tips[:3])}. Focus on staying within each limit."
-        
-        else:
-            if remaining < 2000:
-                return f"Your balance is low (₹{remaining:.0f}). Cut non-essential spending next month."
-            return f"You have ₹{remaining:.0f} remaining. Add a budget plan for category-specific advice."
-
+    # 8. Plan
     elif any(word in question for word in ["plan", "budget", "planned"]):
         if plan_map:
             items = ", ".join([f"{k}: ₹{v:.0f}" for k, v in plan_map.items()])
             return f"Your plan: {items}. Total planned: ₹{plan_total:.0f}."
         return "No plan set for this month. Add a plan for better tracking."
 
-    elif any(word in question for word in ["thanks", "thank you", "thankyou", "thank u"]):
-        return "You're welcome! Feel free to ask anytime about your budget. Good luck with your planning!"
-
-    elif any(word in question for word in ["hi", "hello", "hey", "good morning", "good afternoon", "good evening"]):
+    # 9. Greetings
+    elif any(word in question for word in ["hi", "hello", "hey"]):
         return f"Hi there! I'm your budget assistant. You have ₹{remaining:.0f} remaining this month. What would you like to know?"
-
-    elif any(word in question for word in ["bye", "goodbye", "see you", "exit", "quit"]):
-        return "Goodbye! Remember to track your spending. See you next time!"
 
     else:
         return (f"Budget: ₹{remaining:.0f} remaining out of ₹{monthly:.0f}. "
