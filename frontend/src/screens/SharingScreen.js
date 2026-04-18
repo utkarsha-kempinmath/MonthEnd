@@ -26,9 +26,9 @@ const PREFERENCE_OPTIONS = [
 export default function ShareScreen({ navigation }) {
     const [isSharingEnabled, setIsSharingEnabled] = useState(false);
     const [parentEmail, setParentEmail] = useState('');
+    const [sharingDate, setSharingDate] = useState('1');
     const [loading, setLoading] = useState(false);
     
-    // Defaulting to the Canva mockup's selections
     const [preferences, setPreferences] = useState({
         monthlySummary: true,
         categorySplit: true,
@@ -48,12 +48,19 @@ export default function ShareScreen({ navigation }) {
             return;
         }
 
+        const dateNum = parseInt(sharingDate, 10);
+        if (isSharingEnabled && (isNaN(dateNum) || dateNum < 1 || dateNum > 28)) {
+            Alert.alert("Invalid Date", "Please enter a day between 1 and 28 to ensure consistent monthly delivery.");
+            return;
+        }
+
         setLoading(true);
         try {
             await configureSharing({
                 parentEmail: parentEmail.trim(),
+                sharingDate: dateNum,
                 preferences,
-                tone: 'supportive' // Defaulting to supportive per your backend
+                tone: 'supportive' 
             });
             Alert.alert("Success", "Sharing preferences updated successfully!");
         } catch (err) {
@@ -66,7 +73,6 @@ export default function ShareScreen({ navigation }) {
 
     return (
         <View style={styles.container}>
-            {/* Header */}
             <View style={styles.navHeader}>
                 <TouchableOpacity onPress={() => navigation.goBack()}>
                     <Ionicons name="arrow-back" size={28} color={COLORS.textPrimary} />
@@ -77,14 +83,13 @@ export default function ShareScreen({ navigation }) {
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 
-                {/* Intro / Email Section */}
                 <View style={styles.introCard}>
                     <Text style={styles.introTitle}>Keep parents in the loop.</Text>
-                    <Text style={styles.introSub}>Share your financial awareness journey with them automatically on the 1st of every month.</Text>
+                    <Text style={styles.introSub}>Share your financial awareness journey with them automatically on your chosen date every month.</Text>
                     
                     <Text style={styles.label}>Parent's Email</Text>
                     <TextInput 
-                        style={styles.input}
+                        style={[styles.input, { marginBottom: 15 }]}
                         placeholder="parent@email.com"
                         placeholderTextColor="#888"
                         keyboardType="email-address"
@@ -92,9 +97,19 @@ export default function ShareScreen({ navigation }) {
                         value={parentEmail}
                         onChangeText={setParentEmail}
                     />
+
+                    <Text style={styles.label}>Send Date (1-28)</Text>
+                    <TextInput 
+                        style={styles.input}
+                        placeholder="e.g., 1"
+                        placeholderTextColor="#888"
+                        keyboardType="number-pad"
+                        value={sharingDate}
+                        onChangeText={(text) => setSharingDate(text.replace(/[^0-9]/g, ''))}
+                        maxLength={2}
+                    />
                 </View>
 
-                {/* Master Toggle */}
                 <View style={styles.masterToggleContainer}>
                     <Text style={styles.masterToggleText}>Enable Monthly Report</Text>
                     <Switch 
@@ -105,7 +120,6 @@ export default function ShareScreen({ navigation }) {
                     />
                 </View>
 
-                {/* Privacy Banner */}
                 <View style={styles.privacyBanner}>
                     <Ionicons name="shield-checkmark" size={20} color={COLORS.primaryPurple} style={{ marginRight: 10 }} />
                     <Text style={styles.privacyText}>
@@ -113,7 +127,6 @@ export default function ShareScreen({ navigation }) {
                     </Text>
                 </View>
 
-                {/* Preferences Checklist */}
                 <Text style={styles.sectionTitle}>What to share</Text>
                 <View style={styles.preferencesWrapper}>
                     {PREFERENCE_OPTIONS.map((option) => {
@@ -142,7 +155,6 @@ export default function ShareScreen({ navigation }) {
                     })}
                 </View>
 
-                {/* Save Button */}
                 <TouchableOpacity 
                     style={styles.saveBtn} 
                     onPress={handleSave}

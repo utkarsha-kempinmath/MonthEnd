@@ -4,20 +4,34 @@ const { generateParentReport } = require("../services/parentReportService");
 const { generateEmailHTML } = require("../utils/emailTemplate");
 const { sendParentEmail } = require("../services/mailService");
 
-cron.schedule("0 0 1 * *", async () => {
+// Runs every single day at 12:00 AM (Midnight)
+cron.schedule("0 0 * * *", async () => {
+  try {
+    // 1. Get today's day of the month (e.g., 15)
+    const todayDate = new Date().getDate();
 
-  const users = await ShareConfig.find({ isSharingEnabled: true });
+    // 2. Find ONLY the users who have sharing enabled AND selected today
+    const users = await ShareConfig.find({ 
+      isSharingEnabled: true,
+      sharingDate: todayDate 
+    });
 
-  for (const user of users) {
-    const report = await generateParentReport(user.userId);
+    console.log(`[CRON] Found ${users.length} parent reports to send for day ${todayDate}`);
 
-    if (!report) continue;
+    // 3. Process and send
+    for (const user of users) {
+      const report = await generateParentReport(user.userId);
 
-    const html = generateEmailHTML(report, user.tone);
+      if (!report) continue;
 
-    await sendParentEmail(user.parentEmail, html);
+      const html = generateEmailHTML(report, user.tone);
 
-    user.lastSentAt = new Date();
-    await user.save();
+      await sendParentEmail(user.parentEmail, html);
+
+      user.lastSentAt = new Date();
+      await user.save();
+    }
+  } catch (error) {
+    console.error("[CRON] Error sending parent reports:", error);
   }
 });

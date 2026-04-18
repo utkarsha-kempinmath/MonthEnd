@@ -13,6 +13,14 @@ const shareConfigSchema = new mongoose.Schema({
     required: true,
   },
 
+  sharingDate: {
+    type: Number,
+    required: true,
+    default: 1, // Defaults to the 1st of the month
+    min: 1,
+    max: 28, // Max 28 prevents the "February Bug" (explained below)
+  },
+
   isSharingEnabled: {
     type: Boolean,
     default: false,
