@@ -2,7 +2,8 @@ import axios from "axios";
 import { getToken } from "./tokenService";
 
 const API = axios.create({
-    baseURL: 'http://192.168.2.125:3000/api'
+    baseURL: 'https://monthend.onrender.com/api',
+    timeout: 30000
 });
 
 API.interceptors.request.use(async (config) => {

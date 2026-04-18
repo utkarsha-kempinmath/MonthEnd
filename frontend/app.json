@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "com.monthend",
+    "name": "MonthEnd",
     "slug": "frontend",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "frontend",
+    "scheme": "com.monthend",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {

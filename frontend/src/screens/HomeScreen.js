@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { 
-    View, 
-    Text, 
-    ScrollView, 
-    StyleSheet, 
-    Dimensions, 
-    TouchableOpacity, 
-    Modal, 
-    TouchableWithoutFeedback 
+import {
+    View,
+    Text,
+    ScrollView,
+    StyleSheet,
+    Dimensions,
+    TouchableOpacity,
+    Modal,
+    TouchableWithoutFeedback
 } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useIsFocused } from '@react-navigation/native';
@@ -21,6 +21,7 @@ const { width } = Dimensions.get('window');
 const HomeScreen = ({ navigation }) => {
     const isFocused = useIsFocused();
     const [data, setData] = useState({ totalIncome: 0, totalSpent: 0, remaining: 0 });
+    const [userName, setUserName] = useState("");
     const [menuVisible, setMenuVisible] = useState(false);
 
     const radius = 45;
@@ -39,6 +40,11 @@ const HomeScreen = ({ navigation }) => {
             const res = await getDashboard();
             if (res.data.success) {
                 setData(res.data);
+                if (res.data.user && res.data.user.name) {
+                    setUserName(res.data.user.name);
+                } else if (res.data.name) {
+                    setUserName(res.data.name);
+                }
             }
         } catch (err) {
             console.log("Dashboard fetch error:", err);
@@ -73,11 +79,13 @@ const HomeScreen = ({ navigation }) => {
             <ScrollView style={styles.container}>
                 <View style={styles.headerRow}>
                     <Text style={styles.header}>MonthEnd</Text>
-                    <TouchableOpacity 
-                        style={styles.profileCircle} 
+                    <TouchableOpacity
+                        style={styles.profileCircle}
                         onPress={() => setMenuVisible(true)}
                     >
-                        <Text style={styles.profileInitial}>U</Text>
+                        <Text style={styles.profileInitial}>
+                            {userName ? userName.charAt(0).toUpperCase() : 'M'}
+                        </Text>
                     </TouchableOpacity>
                 </View>
 
@@ -156,11 +164,11 @@ const HomeScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
     container: { flex: 1, paddingTop: 60, paddingHorizontal: 20 },
-    headerRow: { 
-        flexDirection: 'row', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: 20 
+    headerRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20
     },
     header: { fontSize: 28, fontWeight: 'bold', color: COLORS.textPrimary },
     profileCircle: {
