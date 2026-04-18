@@ -46,7 +46,7 @@ const googleLogin = async (req, res) => {
 
     if (!user) {
       user = await User.create({
-        fullname: name,
+        username: name,
         email,
         passwordHash: null,
         authProvider: "google",
