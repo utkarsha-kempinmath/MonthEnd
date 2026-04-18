@@ -5,6 +5,7 @@ import { signup, googleLogin } from "../services/authService"; // <-- Imported g
 import { saveToken } from "../services/tokenService";
 import { COLORS } from "../constants/theme";
 import { useGoogleAuth } from "../services/googleAuth";
+import * as WebBrowser from "expo-web-browser";
 
 export default function SignupScreen({ navigation }) {
     const [name, setName] = useState("");
@@ -20,7 +21,12 @@ export default function SignupScreen({ navigation }) {
             const idToken = response.authentication?.idToken || response.params?.id_token;
             
             if (idToken) {
-                handleGoogleSignUp(idToken);
+                WebBrowser.dismissBrowser();
+            
+            // 2. Wait 500ms before doing the heavy lifting and changing screens
+            setTimeout(() => {
+                handleGoogleSignIn(idToken); // NOTE: Use handleGoogleSignUp in your SignupScreen
+            }, 500);
             } else {
                 console.log("Uh oh, Google response missing token:", response);
                 alert("Failed to grab token from Google.");

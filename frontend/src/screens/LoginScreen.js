@@ -5,12 +5,14 @@ import { login, googleLogin } from "../services/authService"; // <-- Ensure goog
 import { saveToken } from "../services/tokenService";
 import { COLORS } from "../constants/theme";
 import { useGoogleAuth } from "../services/googleAuth";
+import * as WebBrowser from "expo-web-browser";
 
 export default function LoginScreen({ navigation }) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const { request, response, promptAsync } = useGoogleAuth();
+    
 
     // Listen for Google Auth Response
     useEffect(() => {
@@ -18,7 +20,12 @@ export default function LoginScreen({ navigation }) {
             const idToken = response.authentication?.idToken || response.params?.id_token;
             
             if (idToken) {
-                handleGoogleSignIn(idToken);
+                WebBrowser.dismissBrowser();
+            
+            // 2. Wait 500ms before doing the heavy lifting and changing screens
+            setTimeout(() => {
+                handleGoogleSignIn(idToken); // NOTE: Use handleGoogleSignUp in your SignupScreen
+            }, 500);
             } else {
                 console.log("Uh oh, Google response missing token:", response);
                 alert("Failed to grab token from Google.");
