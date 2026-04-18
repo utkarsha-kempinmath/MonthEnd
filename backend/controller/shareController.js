@@ -3,18 +3,20 @@ const ShareConfig = require("../models/shareConfigModel");
 // Configure sharing
 const configureSharing = async (req, res) => {
   try {
-    const { parentEmail, preferences, tone } = req.body;
+    // AFTER
+const { parentEmail, preferences, tone, sharingDate } = req.body;
 
-    const config = await ShareConfig.findOneAndUpdate(
-      { userId: req.user._id },
-      {
-        parentEmail,
-        sharingPreferences: preferences,
-        tone,
-        isSharingEnabled: true,
-      },
-      { upsert: true, new: true }
-    );
+const config = await ShareConfig.findOneAndUpdate(
+  { userId: req.user._id },
+  {
+    parentEmail,
+    sharingDate,
+    sharingPreferences: preferences,
+    tone,
+    isSharingEnabled: true,
+  },
+  { upsert: true, new: true }
+);
 
     res.json({ success: true, config });
   } catch (err) {
