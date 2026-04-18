@@ -1,47 +1,25 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { login, googleLogin } from "../services/authService"; // <-- Ensure googleLogin is imported
+import { login, googleLogin } from "../services/authService";
 import { saveToken } from "../services/tokenService";
 import { COLORS } from "../constants/theme";
-import { useGoogleAuth } from "../services/googleAuth";
-import * as WebBrowser from "expo-web-browser";
+import { getGoogleIdToken } from "../services/googleAuth";
 
 export default function LoginScreen({ navigation }) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
-    const { request, response, promptAsync } = useGoogleAuth();
-    
 
-    // Listen for Google Auth Response
-    useEffect(() => {
-        if (response?.type === "success") {
-            const idToken = response.authentication?.idToken || response.params?.id_token;
-            
-            if (idToken) {
-                WebBrowser.dismissBrowser();
-            
-            // 2. Wait 500ms before doing the heavy lifting and changing screens
-            setTimeout(() => {
-                handleGoogleSignIn(idToken); // NOTE: Use handleGoogleSignUp in your SignupScreen
-            }, 500);
-            } else {
-                console.log("Uh oh, Google response missing token:", response);
-                alert("Failed to grab token from Google.");
-            }
-        }
-    }, [response]);
-
-    const handleGoogleSignIn = async (idToken) => {
+    const handleGoogleSignIn = async () => {
         setLoading(true);
         try {
-            const res = await googleLogin({ token: idToken }); // Calls backend /auth/google
+            const idToken = await getGoogleIdToken();
+            const res = await googleLogin({ token: idToken });
             await AsyncStorage.removeItem('isNewUser');
             await saveToken(res.data.token);
-            // RootNavigator will automatically navigate to Home!
         } catch (err) {
-            console.log("Google API ERROR:", err.response?.data || err.message);
+            console.log("Google Sign-In ERROR:", err);
             alert("Google Sign-In failed. Please try again.");
         } finally {
             setLoading(false);
@@ -74,11 +52,7 @@ export default function LoginScreen({ navigation }) {
                 {loading ? <ActivityIndicator color={COLORS.white} /> : <Text style={styles.buttonText}>LOGIN</Text>}
             </TouchableOpacity>
 
-            <TouchableOpacity 
-                style={styles.googleButton} 
-                onPress={() => promptAsync()} 
-                disabled={!request || loading}
-            >
+            <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSignIn} disabled={loading}>
                 <Text style={styles.googleText}>Sign in with Google</Text>
             </TouchableOpacity>
 
