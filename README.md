@@ -1,195 +1,159 @@
-MonthEnd
-
+📉 MonthEnd
 Patterns over prescriptions.
-
-Allowance-Based Financial Wellness Platform
+An Allowance-Based Financial Wellness Platform
 
 A student-focused budgeting and financial wellness system designed for Indian teenagers and young adults to build healthy money habits, reduce financial stress, and learn financial decision-making in a safe, non-judgmental way.
 
-This project treats money management as a behavioral and educational challenge, not a financial optimization problem.
+</div>
 
-Problem Statement
+📸 App Showcase
+(Add your app screenshots in the assets folder and update the links below)
 
+<div align="center">
+<img src="app imgs\dashboard.jpeg" width="22%" />
+<img src="app imgs\expectedVsActual.jpeg" width="22%" />
+</div>
+
+🛑 Problem Statement
 In India, most students:
 
-Receive fixed monthly allowances
+Receive fixed monthly allowances.
 
-Do not earn independently during school or college
+Do not earn independently during school or college.
 
-Lack structured financial literacy
+Lack structured financial literacy.
 
-Experience anxiety, guilt, or dependency due to poor budgeting
+Experience anxiety, guilt, or dependency due to poor budgeting.
 
-Most existing finance apps are built for earning adults, not allowance-based students.
+Most existing finance apps are built for earning adults, not allowance-based students. This project addresses that gap.
 
-This project addresses that gap.
+💡 Core Idea
+This project treats money management as a behavioral and educational challenge, not a financial optimization problem. Instead of only tracking expenses, the system:
 
-Core Idea
+Learns a student’s spending behavior.
 
-Instead of only tracking expenses, the system:
+Predicts consequences before money is spent.
 
-Learns a student’s spending behavior
-
-Predicts consequences before money is spent
-
-Encourages reflection and informed decision-making
+Encourages reflection and informed decision-making.
 
 The focus is awareness and well-being, not control or profit.
 
-✨ Key Features ✅ Allowance-Based Budgeting
+✨ Key Features
+✅ Allowance-Based Budgeting
+Fixed monthly allowance setup.
 
-Fixed monthly allowance setup
+Expected expense limits vs. Actual expense tracking.
 
-Expected expense limits
+Secure Google Auth & traditional Sign-Up options.
 
-Actual vs expected expense tracking
+<div align="center">
+<img src="app imgs\allowance.jpeg" width="22%" />
+</div>
 
 📊 Spending Visualization
+Category-wise breakdown.
 
-Category-wise breakdown
+Deviation from expected spending.
 
-Deviation from expected spending
+Monthly summaries for reflection.
 
-Monthly summaries for reflection
+<div align="center">
+<img src="app imgs\reflections.jpeg" width="22%" />
+</div>
 
-🧠 Behavioral Budget Twin (What If Simulation)
+🧠 Behavioral Budget Twin (What-If Simulation)
+Creates a temporary in-memory snapshot of the user’s current budget state.
 
-Creates a temporary in-memory snapshot of the user’s current budget state
+Simulates hypothetical expenses before spending.
 
-Simulates hypothetical expenses before spending
+Shows the impact on: End-of-month balance, savings goals, and spending risk level.
 
-Shows impact on:
+(Real user data is never modified during simulations).
 
-End-of-month balance
-
-Savings goals
-
-Spending risk level
-
-Real user data is never modified during simulations.
+<div align="center">
+<img src="app imgs\chatbot1.jpeg" width="22%" />
+</div>
 
 💬 Conversational Financial Assistant (Chatbot)
+A supportive chatbot that answers questions like: "Can I afford this right now?" or "How will this affect my goal?"
 
-A supportive chatbot that:
+Explains predictions using numbers and past behavior.
 
-Answers questions like:
+Avoids alarms, judgment, or generic advice.
 
-“Can I afford this right now?”
+Note: This is an explainable, rule-based and ML-assisted decision-support system, not a standalone generative AI.
 
-“How will this affect my goal?”
+👨‍👩‍👧 Automated Parent Reports (Cron Jobs)
+Users can selectively choose a date to share their monthly progress with parents.
 
-Explains predictions using numbers and past behavior
+<div align="center">
+<img src="app imgs\share.jpeg" width="22%" />
+</div>
 
-Avoids alarms, judgment, or generic advice
+Fully customizable privacy: users choose exactly which insights to share (Goals, Category Split, Reflections).
 
-⚠️ This is not a generative AI chatbot. It is an explainable, rule-based and ML-assisted decision-support system.
+Automated email reports sent via backend scheduling.
+
+<div align="center">
+<img src="app imgs\chatbot2.jpeg" width="22%" />
+</div>
 
 🎯 Goal Setting & Reflection
+Short-term goal creation (e.g., saving for a device).
 
-Short-term goal creation (e.g., saving for a device)
+Goal feasibility evaluation and monthly reflection to reinforce learning.
 
-Goal feasibility evaluation
+<div align="center">
+<img src="app imgs\goals.jpeg" width="22%" />
+</div>
 
-Monthly reflection to reinforce learning
+▶️ Demo Flow (End-to-End User Journey)
+Allowance Setup: User securely logs in and enters their monthly allowance and expected limits.
 
-🏗️ System Architecture (High Level)
+<div align="center">
+<img src="app imgs\auth.png" width="22%" />
+</div>
 
-Frontend: Web dashboard with expense tracking and chat interface
+Expense Logging: Daily expenses are added and categorized.
 
-Backend: API layer handling logic and simulations
+<div align="center">
+<img src="app imgs\expense.jpeg" width="22%" />
+</div>
 
-Behavioral Engine:
+Visualization & Awareness: The dashboard displays expected vs. actual spending and remaining allowance.
 
-Spending pattern detection
+What-If Query: User asks the chatbot, “Can I spend ₹600 today?”
 
-Risk scoring
+<div align="center">
+<img src="app imgs\chatbot1.jpeg" width="22%" />
+</div>
 
-What-if simulations via in-memory state cloning
+Budget Twin Simulation: System clones the budget state, injects the expense, and recalculates risks.
 
-Data Layer: User profiles, allowances, expenses, derived insights
+<div align="center">
+<img src="app imgs\chatbot2.jpeg" width="22%" />
+</div>
 
-The chatbot acts as a conversational interface, not standalone intelligence.
+Explainable Response: Chatbot replies: “Based on your last two months, this expense may increase your end-of-month shortfall risk by 40%.”
 
-▶️ Demo Flow (End-to-End)
+User Decision: User decides whether to proceed, adjust, or delay.
 
-This is the typical user journey demonstrated in the prototype:
+Monthly Reflection & Sharing: At month-end, the system summarizes learnings and optionally emails a customized report to parents.
 
-Allowance Setup User enters their monthly allowance and expected spending limits.
+🏗️ System Architecture & Tech Stack
+Frontend (Mobile App): React Native, Expo, Native Android (.aab/.apk)
 
-Expense Logging Daily expenses are added manually and categorized.
+Backend: Node.js, Express, REST APIs (Deployed on Render)
 
-Visualization & Awareness The dashboard shows:
+Database: MongoDB (User profiles, allowances, expenses, share configs)
 
-Expected vs actual spending
+Authentication: Google OAuth2.0, JWT Tokens
 
-Category-wise patterns
+Background Jobs: Node-Cron (Automated parent reporting via email)
 
-Remaining allowance for the month
+Intelligence Layer: Rule-based logic, statistical trend analysis, and in-memory state cloning.
 
-What If Query via Chatbot User asks: “Can I spend ₹600 today?”
-
-Budget Twin Simulation
-
-System creates a temporary snapshot of the current budget state
-
-Injects the hypothetical expense
-
-Recalculates end-of-month balance and risk
-
-Explainable Response Chatbot replies with a clear, data-backed explanation, for example:
-
-“Based on your last two months, this expense may increase your end-of-month shortfall risk by 40%.”
-
-User Decision User decides whether to proceed, adjust, or delay the expense.
-
-Monthly Reflection At month-end, the system summarizes spending behavior and learnings.
-
-Tech Stack (Current & Planned) Frontend
-
-React-based web UI
-
-Budget and chart visualizations
-
-Backend
-
-Node.js + Express
-
-REST APIs
-
-Database: MongoDB
-
-Intelligence Layer
-
-Rule-based logic
-
-Statistical trend analysis
-
-AI-ML-assisted enhancements planned in later phases
-
-🚧 Project Status
-
-Implemented
-
-Frontend UI
-
-Budget tracking and visualization
-
-System and chatbot architecture design
-
-In Progress / Planned
-
-Backend APIs
-
-Behavioral modeling
-
-Chatbot integration
-
-Goal feasibility logic
-
-This is an early-stage, learning-focused prototype, intentionally scoped for clarity and feasibility.
-
-Design Principles
-
+🎨 Design Principles
 Explainable > Complex
 
 Preventive > Reactive
@@ -201,25 +165,23 @@ Trust > Automation
 The system is designed to support user judgment, not replace it.
 
 🌍 Intended Impact
+Reduce financial stress among students.
 
-Reduce financial stress among students
+Improve financial literacy through lived experience.
 
-Improve financial literacy through lived experience
+Encourage responsible independence.
 
-Encourage responsible independence
-
-Provide a safe introduction to money management
+Provide a safe introduction to money management.
 
 Track Alignment: Health, Education & Social Impact
 
 📌 Disclaimer
-
 This project:
 
-Does not offer financial advice
+Does not offer financial advice.
 
-Does not handle payments or investments
+Does not handle real payments or investments.
 
-Does not promote borrowing or trading
+Does not promote borrowing or trading.
 
 It is strictly a budgeting and financial awareness tool. It’s about being more aware.
