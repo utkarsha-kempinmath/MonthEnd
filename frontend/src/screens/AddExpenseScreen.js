@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from "../constants/theme";
 import { EMOTIONS } from "../constants/emotions";
 import { addExpense, getExpenses, deleteExpense } from "../services/expenseService";
-import { getPlan } from "../services/planningService"; //
+import { getPlan } from "../services/planningService";
 
 export default function AddExpenseScreen({ navigation }) {
   const [amount, setAmount] = useState("");
@@ -18,7 +18,7 @@ export default function AddExpenseScreen({ navigation }) {
   useEffect(() => {
     const initializeData = async () => {
       setIsLoading(true);
-      await Promise.all([fetchHistory(), fetchPlannedCategories()]); //
+      await Promise.all([fetchHistory(), fetchPlannedCategories()]);
       setIsLoading(false);
     };
     initializeData();
@@ -26,23 +26,30 @@ export default function AddExpenseScreen({ navigation }) {
 
   const fetchPlannedCategories = async () => {
     try {
-      const res = await getPlan(); //
-      // Check for month-specific plan and extract category names
+      const res = await getPlan();
       const plan = res.data?.plan || res.data;
       if (plan && plan.categories) {
         setPlannedCategories(plan.categories.map(c => c.name));
       }
     } catch (err) {
-      console.log("Planning Fetch Error:", err);
+      if (err.message === 'Network Error') {
+        Alert.alert("No Internet", "Please check your network connection and try again.");
+      } else {
+        console.log("Planning Fetch Error:", err);
+      }
     }
   };
 
   const fetchHistory = async () => {
     try {
-      const res = await getExpenses(); //
+      const res = await getExpenses();
       setHistory(res.data.expenses);
     } catch (err) {
-      console.log("Fetch Error:", err);
+      if (err.message === 'Network Error') {
+        Alert.alert("No Internet", "Please check your network connection and try again.");
+      } else {
+        console.log("Fetch Error:", err);
+      }
     }
   };
 
@@ -53,14 +60,14 @@ export default function AddExpenseScreen({ navigation }) {
 
     const payload = {
       amount: Number(amount),
-      category: selectedCategory.toLowerCase().trim(), //
+      category: selectedCategory.toLowerCase().trim(),
       note: note.trim(),
-      emotion: { primary: selectedEmotion }, //
+      emotion: { primary: selectedEmotion },
       date: new Date(),
     };
 
     try {
-      await addExpense(payload); //
+      await addExpense(payload);
       Alert.alert("Success", "Expense added 🎉");
       setAmount("");
       setSelectedCategory("");
@@ -68,16 +75,24 @@ export default function AddExpenseScreen({ navigation }) {
       setSelectedEmotion("");
       fetchHistory();
     } catch (err) {
-      Alert.alert("Error", "Failed to add expense");
+      if (err.message === 'Network Error') {
+        Alert.alert("No Internet", "Please check your network connection and try again.");
+      } else {
+        Alert.alert("Error", "Failed to add expense");
+      }
     }
   };
 
   const handleDelete = async (id) => {
     try {
-      await deleteExpense(id); //
+      await deleteExpense(id);
       fetchHistory();
     } catch (err) {
-      Alert.alert("Error", "Could not delete");
+      if (err.message === 'Network Error') {
+        Alert.alert("No Internet", "Please check your network connection and try again.");
+      } else {
+        Alert.alert("Error", "Could not delete");
+      }
     }
   };
 
@@ -89,7 +104,6 @@ export default function AddExpenseScreen({ navigation }) {
 
       <Text style={styles.title}>Add Expense</Text>
 
-      {/* Amount Input */}
       <Text style={styles.label}>Amount</Text>
       <TextInput 
         style={styles.input} 
@@ -100,23 +114,16 @@ export default function AddExpenseScreen({ navigation }) {
         onChangeText={setAmount} 
       />
 
-      {/* Dynamic Category Selection */}
       <Text style={styles.label}>Category</Text>
       {plannedCategories.length > 0 ? (
         <View style={styles.categoryRow}>
           {plannedCategories.map((cat) => (
             <TouchableOpacity 
               key={cat}
-              style={[
-                styles.catChip, 
-                selectedCategory === cat && styles.selectedCatChip
-              ]}
+              style={[styles.catChip, selectedCategory === cat && styles.selectedCatChip]}
               onPress={() => setSelectedCategory(cat)}
             >
-              <Text style={[
-                styles.catChipText,
-                selectedCategory === cat && { color: COLORS.white }
-              ]}>{cat}</Text>
+              <Text style={[styles.catChipText, selectedCategory === cat && { color: COLORS.white }]}>{cat}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -125,10 +132,7 @@ export default function AddExpenseScreen({ navigation }) {
           <Text style={styles.emptyPlanText}>
             No categories found. Please plan for the month first.
           </Text>
-          <TouchableOpacity 
-            style={styles.planLink}
-            onPress={() => navigation.navigate("ExpectedSpend")}
-          >
+          <TouchableOpacity style={styles.planLink} onPress={() => navigation.navigate("ExpectedSpend")}>
             <Text style={styles.planLinkText}>Go to Planning →</Text>
           </TouchableOpacity>
         </View>
@@ -143,7 +147,6 @@ export default function AddExpenseScreen({ navigation }) {
         onChangeText={setNote} 
       />
 
-      {/* Emotions */}
       <Text style={styles.label}>How did it feel?</Text>
       <View style={styles.emoRow}>
         {EMOTIONS.map((emotion) => (
@@ -167,13 +170,14 @@ export default function AddExpenseScreen({ navigation }) {
         <Text style={styles.submitText}>ADD EXPENSE</Text>
       </TouchableOpacity>
 
-      {/* History List */}
       <Text style={[styles.label, { marginTop: 40, fontSize: 18 }]}>Recent Expenses</Text>
       {history.map((item) => (
         <View key={item._id} style={styles.historyCard}>
           <View style={{ flex: 1 }}>
             <Text style={styles.historyCategory}>{item.category.toUpperCase()}</Text>
             <Text style={styles.historyDate}>{new Date(item.date).toDateString()}</Text>
+            {/* Note */}
+            <Text style={styles.historyNote}>{item.note && item.note.trim() ? item.note : "No note"}</Text>
             <View style={styles.historyTag}>
               <Text style={styles.historyTagText}>{item.emotion.primary}</Text>
             </View>
@@ -214,6 +218,7 @@ const styles = StyleSheet.create({
   historyCard: { backgroundColor: COLORS.card, padding: 15, borderRadius: 16, flexDirection: 'row', marginBottom: 12, borderWidth: 1, borderColor: 'rgba(255, 140, 82, 0.2)' },
   historyCategory: { color: COLORS.accentOrange, fontWeight: 'bold', fontSize: 16 },
   historyDate: { color: COLORS.textSecondary, fontSize: 12, marginVertical: 4 },
+  historyNote: { color: COLORS.textSecondary, fontSize: 12, fontStyle: 'italic', marginBottom: 6 },
   historyAmount: { color: COLORS.textPrimary, fontWeight: 'bold', fontSize: 18, marginTop: 10 },
   historyTag: { borderWidth: 1, borderColor: COLORS.accentOrange, paddingHorizontal: 10, paddingVertical: 2, borderRadius: 12, alignSelf: 'flex-start', marginTop: 5 },
   historyTagText: { color: COLORS.accentOrange, fontSize: 10, fontWeight: '600' }

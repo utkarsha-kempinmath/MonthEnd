@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator
 import { Ionicons } from '@expo/vector-icons';
 import { LineChart } from 'react-native-chart-kit';
 import { COLORS } from '../constants/theme';
-import { getGoalAnalysis, updateGoal } from '../services/goalService';
+import { getGoalAnalysis, updateGoal, deleteGoal } from '../services/goalService';
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -24,7 +24,11 @@ export default function GoalDetailScreen({ route, navigation }) {
             const res = await getGoalAnalysis(goalId);
             setAnalysis(res.data);
         } catch (err) {
-            Alert.alert("Error", "Could not load goal details.");
+            if (err.message === 'Network Error') {
+                Alert.alert("No Internet", "Please check your network connection and try again.");
+            } else {
+                Alert.alert("Error", "Could not load goal details.");
+            }
         } finally {
             setLoading(false);
         }
@@ -40,8 +44,38 @@ export default function GoalDetailScreen({ route, navigation }) {
             setAddAmount('');
             fetchGoalDetails(); 
         } catch (err) {
-            Alert.alert("Error", "Could not update savings.");
+            if (err.message === 'Network Error') {
+                Alert.alert("No Internet", "Please check your network connection and try again.");
+            } else {
+                Alert.alert("Error", "Could not update savings.");
+            }
         }
+    };
+
+    const handleDeleteGoal = () => {
+        Alert.alert(
+            "Delete Goal",
+            "Are you sure you want to delete this goal? This action cannot be undone.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await deleteGoal(goalId);
+                            navigation.goBack();
+                        } catch (err) {
+                            if (err.message === 'Network Error') {
+                                Alert.alert("No Internet", "Please check your network connection and try again.");
+                            } else {
+                                Alert.alert("Error", "Could not delete goal.");
+                            }
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     if (loading || !analysis) {
@@ -72,7 +106,10 @@ export default function GoalDetailScreen({ route, navigation }) {
                     <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
                 </TouchableOpacity>
                 <Text style={styles.topHeaderText}>Goal Tracking</Text>
-                <View style={{ width: 40 }} />
+                {/* Delete button in header */}
+                <TouchableOpacity onPress={handleDeleteGoal} style={styles.deleteHeaderBtn}>
+                    <Ionicons name="trash-outline" size={22} color="#FF6B6B" />
+                </TouchableOpacity>
             </View>
 
             <View style={styles.content}>
@@ -139,6 +176,12 @@ export default function GoalDetailScreen({ route, navigation }) {
                 <TouchableOpacity style={styles.updateBtn} onPress={() => setUpdateModal(true)}>
                     <Text style={styles.updateBtnText}>Add Savings</Text>
                 </TouchableOpacity>
+
+                <TouchableOpacity style={styles.deleteBtn} onPress={handleDeleteGoal}>
+                    <Ionicons name="trash-outline" size={18} color="#FF6B6B" style={{ marginRight: 8 }} />
+                    <Text style={styles.deleteBtnText}>Delete Goal</Text>
+                </TouchableOpacity>
+
                 <View style={{ height: 40 }} />
             </View>
 
@@ -173,6 +216,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.background }, 
     topHeader: { paddingTop: 60, paddingBottom: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20 },
     backBtn: { padding: 8 },
+    deleteHeaderBtn: { padding: 8 },
     topHeaderText: { fontSize: 20, fontWeight: 'bold', color: COLORS.textPrimary },
     content: { padding: 20 },
     titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
@@ -197,8 +241,11 @@ const styles = StyleSheet.create({
     insightsTitle: { fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: 12, fontSize: 16 },
     insightText: { color: COLORS.textSecondary, marginBottom: 8, fontSize: 14, lineHeight: 22 },
 
-    updateBtn: { backgroundColor: COLORS.softTeal, padding: 18, borderRadius: 16, alignItems: 'center', elevation: 3 },
+    updateBtn: { backgroundColor: COLORS.softTeal, padding: 18, borderRadius: 16, alignItems: 'center', elevation: 3, marginBottom: 12 },
     updateBtnText: { color: COLORS.white, fontSize: 16, fontWeight: 'bold' },
+
+    deleteBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#FF6B6B', padding: 16, borderRadius: 16 },
+    deleteBtnText: { color: '#FF6B6B', fontSize: 16, fontWeight: 'bold' },
 
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 },
     modalContent: { backgroundColor: COLORS.background, padding: 25, borderRadius: 20, elevation: 5 },

@@ -7,7 +7,8 @@ import {
     Dimensions,
     TouchableOpacity,
     Modal,
-    TouchableWithoutFeedback
+    TouchableWithoutFeedback,
+    Alert
 } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useIsFocused } from '@react-navigation/native';
@@ -47,15 +48,17 @@ const HomeScreen = ({ navigation }) => {
                 }
             }
         } catch (err) {
-            console.log("Dashboard fetch error:", err);
+            if (err.message === 'Network Error') {
+                Alert.alert("No Internet", "Please check your network connection and try again.");
+            } else {
+                console.log("Dashboard fetch error:", err);
+            }
         }
     };
 
     const handleLogout = async () => {
         await removeToken();
         setMenuVisible(false);
-        // Note: RootNavigator handles the switch to AuthNavigator 
-        // automatically when the token is removed from storage.
     };
 
     const rawProgress = data.totalIncome > 0 ? data.totalSpent / data.totalIncome : 0;
