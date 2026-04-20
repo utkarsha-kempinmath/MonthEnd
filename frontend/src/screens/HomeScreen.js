@@ -66,15 +66,15 @@ const HomeScreen = ({ navigation }) => {
     const strokeDashoffset = circumference - progress * circumference;
 
     const menuItems = [
-        { id: '1', title: 'Add Expense', icon: '➕', route: 'AddExpense', color: COLORS.primaryPurple },
-        { id: '2', title: 'Ask Before Spend', icon: '💬', route: 'Chat', color: COLORS.secondaryPurple },
-        { id: '3', title: 'Set Allowance', icon: '💰', route: 'Allowance', color: COLORS.accentOrange },
-        { id: '4', title: 'Calendar', icon: '📅', route: 'Calendar', color: COLORS.mutedYellow },
-        { id: '5', title: 'Expected Spend', icon: '📊', route: 'ExpectedSpend', color: COLORS.softTeal },
-        { id: '6', title: 'Exp vs Actual', icon: '⚖️', route: 'Analytics', color: COLORS.card },
-        { id: '7', title: 'Goal Tracking', icon: '🎯', route: 'Goal', color: COLORS.secondaryPurple },
-        { id: '8', title: 'Month Track', icon: '📈', route: 'MonthTrack', color: COLORS.softTeal },
-        { id: '9', title: 'Share with Parents', icon: '👨‍👩‍👧', route: 'ShareData', color: COLORS.card },
+        { id: '1', title: 'Add Expense',       icon: '➕',  route: 'AddExpense',    color: '#6B5B9E' },
+        { id: '2', title: 'Ask Before Spend',   icon: '💬',  route: 'Chat',          color: '#7B6AAE' },
+        { id: '3', title: 'Set Allowance',      icon: '💰',  route: 'Allowance',     color: '#B85C2A' },
+        { id: '4', title: 'Calendar',           icon: '📅',  route: 'Calendar',      color: '#8B7A2A' },
+        { id: '5', title: 'Expected Spend',     icon: '📊',  route: 'ExpectedSpend', color: '#2A7A6A' },
+        { id: '6', title: 'Exp vs Actual',      icon: '⚖️',  route: 'Analytics',     color: '#1A1A2E' },
+        { id: '7', title: 'Goal Tracking',      icon: '🎯',  route: 'Goal',          color: '#6B5B9E' },
+        { id: '8', title: 'Month Track',        icon: '📈',  route: 'MonthTrack',    color: '#2A7A6A' },
+        { id: '9', title: 'Share with Parents', icon: '👨‍👩‍👧', route: 'ShareData',    color: '#1A1A2E' },
     ];
 
     return (
