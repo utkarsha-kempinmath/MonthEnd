@@ -63,7 +63,7 @@ export default function AddExpenseScreen({ navigation }) {
       category: selectedCategory.toLowerCase().trim(),
       note: note.trim(),
       emotion: { primary: selectedEmotion },
-      date: new Date(),
+      // date intentionally omitted — backend uses its own new Date()
     };
 
     try {
@@ -105,20 +105,20 @@ export default function AddExpenseScreen({ navigation }) {
       <Text style={styles.title}>Add Expense</Text>
 
       <Text style={styles.label}>Amount</Text>
-      <TextInput 
-        style={styles.input} 
-        placeholder="₹ 0" 
-        placeholderTextColor="#666" 
-        keyboardType="numeric" 
-        value={amount} 
-        onChangeText={setAmount} 
+      <TextInput
+        style={styles.input}
+        placeholder="₹ 0"
+        placeholderTextColor="#666"
+        keyboardType="numeric"
+        value={amount}
+        onChangeText={setAmount}
       />
 
       <Text style={styles.label}>Category</Text>
       {plannedCategories.length > 0 ? (
         <View style={styles.categoryRow}>
           {plannedCategories.map((cat) => (
-            <TouchableOpacity 
+            <TouchableOpacity
               key={cat}
               style={[styles.catChip, selectedCategory === cat && styles.selectedCatChip]}
               onPress={() => setSelectedCategory(cat)}
@@ -139,20 +139,20 @@ export default function AddExpenseScreen({ navigation }) {
       ) : null}
 
       <Text style={styles.label}>Note</Text>
-      <TextInput 
-        style={styles.input} 
-        placeholder="Optional" 
-        placeholderTextColor="#666" 
-        value={note} 
-        onChangeText={setNote} 
+      <TextInput
+        style={styles.input}
+        placeholder="Optional"
+        placeholderTextColor="#666"
+        value={note}
+        onChangeText={setNote}
       />
 
       <Text style={styles.label}>How did it feel?</Text>
       <View style={styles.emoRow}>
         {EMOTIONS.map((emotion) => (
-          <TouchableOpacity 
-            key={emotion.label} 
-            style={[styles.emoChip, selectedEmotion === emotion.label && styles.selectedEmo]} 
+          <TouchableOpacity
+            key={emotion.label}
+            style={[styles.emoChip, selectedEmotion === emotion.label && styles.selectedEmo]}
             onPress={() => setSelectedEmotion(emotion.label)}
           >
             <Text style={[styles.emoText, selectedEmotion === emotion.label && { color: COLORS.white }]}>
@@ -162,8 +162,8 @@ export default function AddExpenseScreen({ navigation }) {
         ))}
       </View>
 
-      <TouchableOpacity 
-        style={[styles.submitBtn, plannedCategories.length === 0 && { opacity: 0.5 }]} 
+      <TouchableOpacity
+        style={[styles.submitBtn, plannedCategories.length === 0 && { opacity: 0.5 }]}
         onPress={handleSubmit}
         disabled={plannedCategories.length === 0}
       >
@@ -176,7 +176,6 @@ export default function AddExpenseScreen({ navigation }) {
           <View style={{ flex: 1 }}>
             <Text style={styles.historyCategory}>{item.category.toUpperCase()}</Text>
             <Text style={styles.historyDate}>{new Date(item.date).toDateString()}</Text>
-            {/* Note */}
             <Text style={styles.historyNote}>{item.note && item.note.trim() ? item.note : "No note"}</Text>
             <View style={styles.historyTag}>
               <Text style={styles.historyTagText}>{item.emotion.primary}</Text>

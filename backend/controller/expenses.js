@@ -1,6 +1,5 @@
 const Expense = require("../models/expensesModel")
 
-// Allowed emotions (same as schema enum)
 const allowedEmotions = [
   "stressed",
   "sad",
@@ -13,7 +12,7 @@ const allowedEmotions = [
 
 exports.addExpense = async (req, res) => {
   try {
-    const { amount, date, category, note, emotion } = req.body
+    const { amount, category, note, emotion } = req.body
 
     if (!amount || !category || !emotion?.primary) {
       return res.status(400).json({
@@ -36,24 +35,14 @@ exports.addExpense = async (req, res) => {
       })
     }
 
-    const inputDate = date ? new Date(date) : new Date()
-
-    if (inputDate > new Date()) {
-      return res.status(400).json({
-        success: false,
-        message: "Date cannot be in the future"
-      })
-    }
-
     const expense = await Expense.create({
       user: req.user._id,
       amount,
       category,
-      date: inputDate,
+      date: new Date(),
       note: note || "",
       emotion: {
         primary: emotion.primary
-        // version auto defaults to 1
       }
     })
 
@@ -97,23 +86,11 @@ exports.updateExpense = async (req, res) => {
       expense.amount = amount
     }
 
-    if (category !== undefined) {
-      expense.category = category
-    }
-
-    if (note !== undefined) {
-      expense.note = note
-    }
+    if (category !== undefined) expense.category = category
+    if (note !== undefined) expense.note = note
 
     if (date !== undefined) {
-      const inputDate = new Date(date)
-      if (inputDate > new Date()) {
-        return res.status(400).json({
-          success: false,
-          message: "Date cannot be in the future"
-        })
-      }
-      expense.date = inputDate
+      expense.date = new Date(date)
     }
 
     if (emotion?.primary) {
@@ -123,7 +100,6 @@ exports.updateExpense = async (req, res) => {
           message: "Invalid emotion type"
         })
       }
-
       expense.emotion.primary = emotion.primary
       expense.emotion.version += 1
     }
@@ -171,7 +147,6 @@ exports.deleteExpense = async (req, res) => {
     })
   }
 }
-
 
 exports.getExpenses = async (req, res) => {
   try {
